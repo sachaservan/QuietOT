@@ -1,6 +1,8 @@
 # QuietOT Implementation
 
-A prototype implementation of the [QuietOT](https://eprint.iacr.org/2024/1079.pdf) OT extension protocol in C.
+A prototype implementation of the [QuietOT](https://eprint.iacr.org/2024/1079.pdf) OT extension protocol in C. 
+
+QuietOT is a lightweight oblivious transfer protocol with a public-key setup. 
 
 ## Organization
 
@@ -10,7 +12,7 @@ A prototype implementation of the [QuietOT](https://eprint.iacr.org/2024/1079.pd
 | [quiet-bipsw/](quiet-bipsw/)     | Implementation of QuietOT with the BIPSW wPRF.                 |
 | [quiet-gar/](quiet-gar/)         | Implementation of QuietOT using the GAR wPRF.                  |
 | [bcmpr-bipsw/](bcmpr-bipsw/)     | Implementation of the BCMPR PCF using the BIPSW wPRF           |
-| [other/](other/)                 | Partial benchmark implementations of the BCMPR and OSY pseudorandom correlation functions. |
+| [other/](other/)                 | Partial implementations of the BCMPR and OSY pseudorandom correlation functions for benchmarking purposes. |
 
 
 ## Dependencies
@@ -33,28 +35,64 @@ On MacOS, use [homebrew](https://brew.sh/) to install dependencies.
 `cmake` and `clang` can be installed via `xcode-select --install`.
 OpenSSL can be installed via `brew install openssl` or manually.
 
+
+
+## Installation
+
+Ubuntu: 
+```
+sudo apt-get update
+sudo apt-get install build-essential cmake libssl-dev clang
+```
+
+CentOS
+```
+sudo yum groupinstall 'Development Tools'
+sudo yum install cmake openssl-devel clang
+```
+
+MacOS
+```
+brew install openssl
+xcode-select --install  # Installs cmake and clang
+```
+
+## Quick Start
+
+```bash
+git clone https://github.com/yourusername/QuietOT.git
+cd QuietOT
+cd quiet-bipsw
+make && ./bin/test
+```
+
 ## Running tests and benchmarks
 
 Test and benchmark for QuietOT:
 
 ```
-cd [bipsw | gar]
-make && ./test 
+cd [quiet-bipsw | quiet-gar]
+make && ./bin/test 
 ```
 Running BIPSW with AVX512
 ```
 make -AVX=1 
-make && ./test 
+make && ./bin/test 
 ```
 
-Benchmarking BCMPR and OSY:
+Benchmarking BCMPR (with BIPSW wPRF):
+
+```
+cd bcmpr-bipsw
+make && ./bin/test
+```
+
+Benchmarking BCMPR (with GAR wPRF) and OSY:
 
 ```
 cd other
-make && ./bench
+make && ./bin/bench
 ```
-
-## Future development
 
 ## Citation
 ```
