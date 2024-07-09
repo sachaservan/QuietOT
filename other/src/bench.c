@@ -20,13 +20,13 @@ double benchmark_BCMPR_GAR()
 {
     OpenSSL_add_all_algorithms();
 
-    size_t key_len = 74; // the size of the majority predicate chosen in BCMPR
+    size_t key_len = 74; // the size of the predicate chosen in BCMPR
 
     struct Params *pp = (struct Params *)malloc(sizeof(struct Params));
     setup(pp, key_len);
 
     // For benchmarking purposes, we generate two CPRF keys
-    // one for the "MAJ" component and one for the "XOR" component
+    // one for each constrained PRF parameterized by set S_b
     struct Key *msk0 = (struct Key *)malloc(sizeof(struct Key));
     struct Key *msk1 = (struct Key *)malloc(sizeof(struct Key));
     key_gen(pp, msk0);
@@ -46,16 +46,15 @@ double benchmark_BCMPR_GAR()
 
     EC_POINT *out = EC_POINT_new(pp->curve);
 
-    size_t point_size = BN_num_bytes(result0);
-
-    // assume that curve point can be represented in = 256 bits
-    uint8_t *output0 = malloc(sizeof(uint8_t) * point_size * NUM_OTS);
-    uint8_t *output1 = malloc(sizeof(uint8_t) * point_size * NUM_OTS);
-
     // get byte size of curve point
+    size_t point_size = BN_num_bytes(result0);
     size_t point_len = get_curve_point_byte_size(pp);
     size_t point_len_blocks = (point_len / 16); // how many fit in uint128_t
     uint8_t *point_bytes = (uint8_t *)malloc(point_len);
+
+    // assume that curve point can be represented in 256 bits
+    uint8_t *output0 = malloc(sizeof(uint8_t) * point_len_blocks * NUM_OTS);
+    uint8_t *output1 = malloc(sizeof(uint8_t) * point_len_blocks * NUM_OTS);
 
     uint128_t *prf_inputs_0 = malloc(sizeof(uint128_t) * point_len_blocks * NUM_OTS);
     uint128_t *prf_inputs_1 = malloc(sizeof(uint128_t) * point_len_blocks * NUM_OTS);
