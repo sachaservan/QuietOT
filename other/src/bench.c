@@ -135,37 +135,55 @@ double benchmark_OSY()
 {
     BN_CTX *ctx = BN_CTX_new();
 
-    // N = 3200 bits => 3200/8 = 400 bytes
-    unsigned char buffer[400];
-    RAND_bytes(buffer, 400);
-    BIGNUM *modulus = BN_bin2bn(buffer, 400, NULL);
-
-    BIGNUM *a = BN_bin2bn(buffer, 400, NULL);
-    BIGNUM *b = BN_bin2bn(buffer, 400, NULL);
-
-    // sample large a and b
-    BN_rand_range(a, modulus);
-    BN_rand_range(b, modulus);
-
+    double time_taken = 0;
     int num_trials_internal = 3;
 
-    double time_taken = 0;
     for (int trial = 0; trial < num_trials_internal; trial++)
     {
+        // N ~ 3200 bits for security
+        BIGNUM *prime0 = BN_new();
+        BIGNUM *prime1 = BN_new();
+        BN_generate_prime_ex(prime0, 1600, 0, NULL, NULL, NULL);
+        BN_generate_prime_ex(prime1, 1600, 0, NULL, NULL, NULL);
+
+        BIGNUM *modulus = BN_new();
+        BN_mul(modulus, prime0, prime1, ctx);
+        BN_free(prime0);
+        BN_free(prime1);
+
+        BIGNUM **base = malloc(sizeof(void *) * 128);
+        BIGNUM **exps = malloc(sizeof(void *) * 128);
+        for (int i = 0; i < 128; i++)
+        {
+            base[i] = BN_new();
+            exps[i] = BN_new();
+
+            BN_rand_range(base[i], modulus);
+            BN_rand_range(exps[i], modulus);
+        }
+
         clock_t t = clock();
         for (int i = 0; i < 128; i++)
-            BN_mod_exp(b, a, b, modulus, ctx);
+            BN_mod_exp(base[i], base[i], exps[i], modulus, ctx);
 
         t = clock() - t;
         time_taken += ((double)t) / (CLOCKS_PER_SEC / 1000.0); // ms
+
+        for (int i = 0; i < 128; i++)
+        {
+            BN_free(base[i]);
+            BN_free(exps[i]);
+        }
+
+        BN_free(modulus);
+        free(base);
+        free(exps);
     }
 
     printf("Time (total) %f ms\n", time_taken / num_trials_internal);
 
     // free up memory
     BN_CTX_free(ctx);
-    BN_free(a);
-    BN_free(modulus);
 
     return time_taken / num_trials_internal;
 }
