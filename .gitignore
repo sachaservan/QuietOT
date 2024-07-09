@@ -1,0 +1,6 @@
+*json
+*.o
+*.a
+.DS_Store
+*/out/ 
+*/bin/
