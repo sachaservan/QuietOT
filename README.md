@@ -58,7 +58,7 @@ make && ./bench
 
 ## Citation
 ```
-@misc{cryptoeprint:2024/1079,
+@misc{QuietOT,
       author = {Geoffroy Couteau and Lalita Devadas and Srinivas Devadas and Alexander Koch and Sacha Servan-Schreiber},
       title = {{QuietOT}: Lightweight Oblivious Transfer with a Public-Key Setup},
       howpublished = {Cryptology ePrint Archive, Paper 2024/1079},
