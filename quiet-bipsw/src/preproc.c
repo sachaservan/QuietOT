@@ -6,9 +6,9 @@
 
 // Pre-computes inner products and coefficients used in CPRF evaluation.
 void compute_key_caches(
-    struct PublicParams *pp,
-    struct Key *key,
-    struct KeyCache *key_cache,
+    PublicParams *pp,
+    Key *key,
+    KeyCache *key_cache,
     size_t mem_size)
 {
 

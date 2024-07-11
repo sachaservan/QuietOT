@@ -16,13 +16,13 @@ double benchmarkOTs()
     // **********************************
     // Generate public parameters
     // **********************************
-    struct PublicParams *pp = malloc(sizeof(struct PublicParams));
+    PublicParams *pp = malloc(sizeof(PublicParams));
     pp_gen(pp);
 
     // **********************************
     // Generate CPRF master key
     // **********************************
-    struct Key *msk = malloc(sizeof(struct Key));
+    Key *msk = malloc(sizeof(Key));
     key_gen(pp, msk);
 
     uint8_t *constraint = malloc(sizeof(uint8_t) * KEY_LEN);
@@ -31,7 +31,7 @@ double benchmarkOTs()
         constraint[i] &= 1;
 
     // Compute the constrained key
-    struct Key *csk = malloc(sizeof(struct Key));
+    Key *csk = malloc(sizeof(Key));
     constrain_key_gen(pp, msk, csk, constraint);
 
     clock_t t = clock();

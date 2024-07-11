@@ -2,7 +2,7 @@
 #include "other.h"
 #include "params.h"
 
-int setup(struct Params *pp, size_t key_len)
+int setup(Params *pp, size_t key_len)
 {
     pp->key_len = key_len;
     pp->curve = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
@@ -30,7 +30,7 @@ err:
     return 0;
 }
 
-int key_gen(struct Params *pp, struct Key *msk)
+int key_gen(Params *pp, Key *msk)
 {
     msk->key = malloc(sizeof(void *) * pp->key_len);
     msk->delta = BN_new();
@@ -60,7 +60,7 @@ err:
     return 0;
 }
 
-void free_master_key(struct Params *pp, struct Key *msk)
+void free_master_key(Params *pp, Key *msk)
 {
     for (size_t i = 0; i < pp->key_len; i++)
     {
@@ -75,7 +75,7 @@ void free_master_key(struct Params *pp, struct Key *msk)
     free(msk);
 }
 
-void free_public_params(struct Params *pp)
+void free_public_params(Params *pp)
 {
     if (pp->curve)
         EC_GROUP_free(pp->curve);

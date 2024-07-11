@@ -8,7 +8,7 @@
 #include <math.h>
 #include "params.h"
 
-int setup(struct Params *pp, size_t key_len)
+int setup(Params *pp, size_t key_len)
 {
     pp->key_len = key_len;
     pp->curve = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
@@ -42,7 +42,7 @@ err:
     return 0;
 }
 
-int key_gen(struct Params *pp, struct Key *msk)
+int key_gen(Params *pp, Key *msk)
 {
     msk->key = malloc(sizeof(void *) * pp->key_len);
     msk->delta = BN_new();
@@ -105,9 +105,9 @@ err:
 }
 
 int constrain_key_gen(
-    struct Params *pp,
-    struct Key *msk,
-    struct Key *csk,
+    Params *pp,
+    Key *msk,
+    Key *csk,
     uint8_t *constraint,
     size_t index)
 {
@@ -153,9 +153,9 @@ err:
 }
 
 int compute_cache(
-    struct Params *pp,
+    Params *pp,
     BIGNUM **key,
-    struct KeyCache *key_cache,
+    KeyCache *key_cache,
     size_t cache_bits)
 {
 
@@ -206,8 +206,8 @@ err:
 }
 
 int sender_eval(
-    struct Params *pp,
-    struct KeyCache *msk_cache,
+    Params *pp,
+    KeyCache *msk_cache,
     uint128_t *inputs,
     uint128_t *outputs,
     size_t num_ots)
@@ -317,11 +317,11 @@ err:
 }
 
 int receiver_eval(
-    struct Params *pp,
-    struct Key *csk0,
-    struct Key *csk1,
-    struct KeyCache *csk_cache_0,
-    struct KeyCache *csk_cache_1,
+    Params *pp,
+    Key *csk0,
+    Key *csk1,
+    KeyCache *csk_cache_0,
+    KeyCache *csk_cache_1,
     uint8_t *constraint,
     uint128_t *inputs,
     uint128_t *outputs,
@@ -349,8 +349,8 @@ int receiver_eval(
 
     uint128_t *prf_inputs = malloc(sizeof(uint128_t) * num_ots * point_len_blocks);
 
-    struct Key *csk;
-    struct KeyCache *csk_cache;
+    Key *csk;
+    KeyCache *csk_cache;
 
     size_t input_step = ceil((pp->key_len) / 128);
 
@@ -475,7 +475,7 @@ err:
     return 0;
 }
 
-void free_master_key(struct Params *pp, struct Key *msk)
+void free_master_key(Params *pp, Key *msk)
 {
     for (size_t i = 0; i < pp->key_len; i++)
     {
@@ -493,7 +493,7 @@ void free_master_key(struct Params *pp, struct Key *msk)
     free(msk);
 }
 
-void free_constrained_key(struct Params *pp, struct Key *csk)
+void free_constrained_key(Params *pp, Key *csk)
 {
     for (size_t i = 0; i < pp->key_len; i++)
     {
@@ -506,7 +506,7 @@ void free_constrained_key(struct Params *pp, struct Key *csk)
     free(csk);
 }
 
-void free_cache(struct Params *pp, struct KeyCache *key_cache)
+void free_cache(Params *pp, KeyCache *key_cache)
 {
     size_t cache_size = (pp->key_len / key_cache->cache_bits) * (1 << key_cache->cache_bits);
     for (size_t i = 0; i < cache_size; i++)
@@ -518,7 +518,7 @@ void free_cache(struct Params *pp, struct KeyCache *key_cache)
     free(key_cache);
 }
 
-void free_public_params(struct Params *pp)
+void free_public_params(Params *pp)
 {
     if (pp->curve)
         EC_GROUP_free(pp->curve);

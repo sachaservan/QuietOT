@@ -13,7 +13,7 @@
 #endif
 
 void pp_gen(
-    struct PublicParams *pp,
+    PublicParams *pp,
     size_t key_len)
 {
     pp->key_len = key_len;
@@ -38,7 +38,7 @@ void pp_gen(
     pp->polymur_params0 = p1;
 }
 
-void pp_free(struct PublicParams *pp)
+void pp_free(PublicParams *pp)
 {
     destroy_ctx_key(pp->hash_ctx);
     destroy_ctx_key(pp->prg_ctx);
@@ -52,7 +52,7 @@ void pp_free(struct PublicParams *pp)
 // need to include secret offset k_0 in both msk and csk
 // (k_0 is only required to avoid having a deterministic output on the all-zero
 // input, which has a negligible probability of occurring).
-void key_gen(struct PublicParams *pp, struct Key *msk)
+void key_gen(PublicParams *pp, Key *msk)
 {
     // CPRF master key (in CRT form with mod 2 and mod 3 parts)
     msk->key_2 = malloc(sizeof(uint128_t) * pp->key_len);
@@ -109,9 +109,9 @@ void key_gen(struct PublicParams *pp, struct Key *msk)
 // (k_0 is only required to avoid having a deterministic output on the all-zero
 // input, which has a negligible probability of occurring).
 void constrain_key_gen(
-    struct PublicParams *pp,
-    struct Key *msk,
-    struct Key *csk,
+    PublicParams *pp,
+    Key *msk,
+    Key *csk,
     uint8_t *constraint)
 {
 
@@ -169,9 +169,9 @@ void constrain_key_gen(
 }
 
 static inline void common_eval(
-    struct PublicParams *pp,
-    struct Key *key,
-    struct KeyCache *key_cache,
+    PublicParams *pp,
+    Key *key,
+    KeyCache *key_cache,
     const uint16_t *inputs,
     uint128_t *outputs_2,
     uint128_t *outputs_3,
@@ -322,9 +322,9 @@ static inline void common_eval(
 }
 
 void sender_eval(
-    struct PublicParams *pp,
-    struct Key *msk,
-    struct KeyCache *msk_cache,
+    PublicParams *pp,
+    Key *msk,
+    KeyCache *msk_cache,
     const uint16_t *inputs,
     uint128_t *outputs,
     const size_t num_ots)
@@ -390,9 +390,9 @@ void sender_eval(
 }
 
 void receiver_eval(
-    struct PublicParams *pp,
-    struct Key *csk,
-    struct KeyCache *csk_cache,
+    PublicParams *pp,
+    Key *csk,
+    KeyCache *csk_cache,
     const uint16_t *inputs,
     uint128_t *outputs,
     const size_t num_ots)
@@ -431,7 +431,7 @@ void receiver_eval(
 
 // Pre-compute corrections terms
 void compute_correction_terms(
-    struct Key *msk,
+    Key *msk,
     uint8_t *delta)
 {
     msk->corrections_3 = malloc(sizeof(uint128_t) * 6 * 2);
