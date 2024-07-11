@@ -10,36 +10,36 @@
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
 
-struct Params
+typedef struct
 {
     size_t key_len;
     EC_GROUP *curve;
     BIGNUM *order;
     BN_CTX *ctx;
     const EC_POINT *g;
-};
+} Params;
 
-struct Key
+typedef struct
 {
     BIGNUM **key;
 
     // optional
     BIGNUM *delta;
-};
+} Key;
 
-struct KeyCache
+typedef struct
 {
     size_t cache_bits;
     BIGNUM **cache;
-};
+} KeyCache;
 
-int setup(struct Params *pp, size_t key_len);
-int key_gen(struct Params *pp, struct Key *msk);
+int setup(Params *pp, size_t key_len);
+int key_gen(Params *pp, Key *msk);
 
-void free_master_key(struct Params *pp, struct Key *msk);
-void free_public_params(struct Params *pp);
+void free_master_key(Params *pp, Key *msk);
+void free_public_params(Params *pp);
 
-static inline size_t get_curve_point_byte_size(struct Params *pp)
+static inline size_t get_curve_point_byte_size(Params *pp)
 {
     // get byte size of curve point
     size_t point_len = EC_POINT_point2oct(

@@ -33,13 +33,13 @@ double benchmarkOTs()
     // **********************************
     // Generate public parameters
     // **********************************
-    struct PublicParams *pp = malloc(sizeof(struct PublicParams));
+    PublicParams *pp = malloc(sizeof(PublicParams));
     pp_gen(pp, key_len);
 
     // **********************************
     // Generate CPRF master key
     // **********************************
-    struct Key *msk = malloc(sizeof(struct Key));
+    Key *msk = malloc(sizeof(Key));
     key_gen(pp, msk);
 
     // **********************************
@@ -47,7 +47,7 @@ double benchmarkOTs()
     // (pre-computed values for inner products)
     // **********************************
     size_t mem_size = (1UL << CACHE_BITS) * (key_len / CACHE_BITS) * sizeof(uint128_t);
-    struct KeyCache *msk_cache = malloc(sizeof(struct KeyCache));
+    KeyCache *msk_cache = malloc(sizeof(KeyCache));
     compute_key_caches(pp, msk, msk_cache, mem_size);
 
     // **********************************
@@ -59,10 +59,10 @@ double benchmarkOTs()
     sample_mod_6(constraint, RING_DIM);
 
     // Compute the constrained key
-    struct Key *csk = malloc(sizeof(struct Key));
+    Key *csk = malloc(sizeof(Key));
     constrain_key_gen(pp, msk, csk, constraint);
 
-    struct KeyCache *csk_cache = malloc(sizeof(struct KeyCache));
+    KeyCache *csk_cache = malloc(sizeof(KeyCache));
     compute_key_caches(pp, csk, csk_cache, mem_size);
 
     // **********************************

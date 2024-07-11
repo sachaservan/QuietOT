@@ -88,7 +88,7 @@ static uint128_t hex_to_uint_128(const char *hex_str)
     return result;
 }
 
-static inline uint128_t universal_hash(struct PublicParams *pp, uint8_t *in, size_t len)
+static inline uint128_t universal_hash(PublicParams *pp, uint8_t *in, size_t len)
 {
     // Compute a universal hash to compress the input into a uint128
     // integer that we then feed into the random oracle.

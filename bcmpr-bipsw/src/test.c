@@ -31,14 +31,14 @@ double benchmarkOTs()
     // **********************************
     // Generate public parameters
     // **********************************
-    struct Params *pp = (struct Params *)malloc(sizeof(struct Params));
+    Params *pp = (Params *)malloc(sizeof(Params));
     setup(pp, key_len);
 
     // **********************************
     // Generate CPRF keys
     // **********************************
-    struct Key *msk0 = (struct Key *)malloc(sizeof(struct Key));
-    struct Key *msk1 = (struct Key *)malloc(sizeof(struct Key));
+    Key *msk0 = (Key *)malloc(sizeof(Key));
+    Key *msk1 = (Key *)malloc(sizeof(Key));
     if (!key_gen(pp, msk0))
         printf("ERROR: when generating msk0\n");
     if (!key_gen(pp, msk1))
@@ -52,24 +52,24 @@ double benchmarkOTs()
     for (size_t i = 0; i < key_len; i++)
         constraint[i] &= 1;
 
-    struct Key *csk0 = (struct Key *)malloc(sizeof(struct Key));
-    struct Key *csk1 = (struct Key *)malloc(sizeof(struct Key));
+    Key *csk0 = (Key *)malloc(sizeof(Key));
+    Key *csk1 = (Key *)malloc(sizeof(Key));
     constrain_key_gen(pp, msk0, csk0, constraint, 0);
     constrain_key_gen(pp, msk1, csk1, constraint, 1);
 
     // **********************************
     // Compute caches
     // **********************************
-    struct KeyCache *msk0_cache = (struct KeyCache *)malloc(sizeof(struct KeyCache));
-    struct KeyCache *msk1_cache = (struct KeyCache *)malloc(sizeof(struct KeyCache));
+    KeyCache *msk0_cache = (KeyCache *)malloc(sizeof(KeyCache));
+    KeyCache *msk1_cache = (KeyCache *)malloc(sizeof(KeyCache));
     if (!compute_cache(pp, msk0->key, msk0_cache, CACHE_BITS))
         printf("Error ocurred when computing cache with msk0\n");
 
     if (!compute_cache(pp, msk1->key, msk1_cache, CACHE_BITS))
         printf("Error ocurred when computing cache with msk1\n");
 
-    struct KeyCache *csk0_cache = (struct KeyCache *)malloc(sizeof(struct KeyCache));
-    struct KeyCache *csk1_cache = (struct KeyCache *)malloc(sizeof(struct KeyCache));
+    KeyCache *csk0_cache = (KeyCache *)malloc(sizeof(KeyCache));
+    KeyCache *csk1_cache = (KeyCache *)malloc(sizeof(KeyCache));
     compute_cache(pp, csk0->key, csk0_cache, CACHE_BITS);
     compute_cache(pp, csk1->key, csk1_cache, CACHE_BITS);
 

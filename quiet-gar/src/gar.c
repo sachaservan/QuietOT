@@ -7,7 +7,7 @@
 #include <string.h>
 #include <openssl/rand.h>
 
-void pp_gen(struct PublicParams *pp)
+void pp_gen(PublicParams *pp)
 {
     // Generate PRG key (for generating random inputs)
     uint128_t prg_key;
@@ -30,14 +30,14 @@ void pp_gen(struct PublicParams *pp)
     pp->polymur_params1 = p1;
 }
 
-void pp_free(struct PublicParams *pp)
+void pp_free(PublicParams *pp)
 {
     destroy_ctx_key(pp->hash_ctx);
     destroy_ctx_key(pp->prg_ctx);
     free(pp);
 }
 
-void key_gen(struct PublicParams *pp, struct Key *msk)
+void key_gen(PublicParams *pp, Key *msk)
 {
     msk->key_xor = malloc(sizeof(uint128_t) * KEY_LEN);
     msk->key_maj = malloc(sizeof(uint8_t) * KEY_LEN * RING_DIM);
@@ -61,9 +61,9 @@ void key_gen(struct PublicParams *pp, struct Key *msk)
 }
 
 void constrain_key_gen(
-    struct PublicParams *pp,
-    struct Key *msk,
-    struct Key *csk,
+    PublicParams *pp,
+    Key *msk,
+    Key *csk,
     uint8_t *constraint)
 {
 
@@ -105,7 +105,7 @@ void compute_correction_terms(
 }
 
 static inline void common_eval(
-    const struct Key *key,
+    const Key *key,
     const uint16_t *xor_inputs,
     const uint16_t *maj_inputs,
     uint128_t *xor_outputs,
@@ -163,8 +163,8 @@ static inline void common_eval(
 }
 
 void sender_eval(
-    struct PublicParams *pp,
-    struct Key *msk,
+    PublicParams *pp,
+    Key *msk,
     const uint16_t *xor_inputs,
     const uint16_t *maj_inputs,
     uint128_t *outputs,
@@ -256,8 +256,8 @@ void sender_eval(
 }
 
 void receiver_eval(
-    struct PublicParams *pp,
-    struct Key *csk,
+    PublicParams *pp,
+    Key *csk,
     const uint16_t *xor_inputs,
     const uint16_t *maj_inputs,
     uint128_t *outputs,
@@ -305,7 +305,7 @@ void receiver_eval(
 }
 
 void GenerateRandomInputs(
-    struct PublicParams *pp,
+    PublicParams *pp,
     uint16_t *xor_inputs,
     uint16_t *maj_inputs,
     size_t num_ots)

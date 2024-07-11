@@ -8,7 +8,7 @@
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
 
-struct Key
+typedef struct
 {
     uint128_t *key_xor;
     uint8_t *key_maj;
@@ -17,45 +17,45 @@ struct Key
     uint8_t *maj_corrections;
     uint128_t xor_delta;
     uint8_t *maj_delta;
-};
+} Key;
 
-struct PublicParams
+typedef struct
 {
     size_t key_len;
     EVP_CIPHER_CTX *hash_ctx;
     EVP_CIPHER_CTX *prg_ctx;
     PolymurHashParams polymur_params0;
     PolymurHashParams polymur_params1;
-};
+} PublicParams;
 
-void pp_gen(struct PublicParams *pp);
-void pp_free(struct PublicParams *pp);
+void pp_gen(PublicParams *pp);
+void pp_free(PublicParams *pp);
 
-void key_gen(struct PublicParams *pp, struct Key *msk);
+void key_gen(PublicParams *pp, Key *msk);
 
 void constrain_key_gen(
-    struct PublicParams *pp,
-    struct Key *msk,
-    struct Key *csk,
+    PublicParams *pp,
+    Key *msk,
+    Key *csk,
     uint8_t *constraint);
 
 void GenerateRandomInputs(
-    struct PublicParams *pp,
+    PublicParams *pp,
     uint16_t *xor_inputs,
     uint16_t *maj_inputs,
     size_t num_ots);
 
 void sender_eval(
-    struct PublicParams *pp,
-    struct Key *msk,
+    PublicParams *pp,
+    Key *msk,
     const uint16_t *xor_inputs,
     const uint16_t *maj_inputs,
     uint128_t *outputs,
     const size_t num_ots);
 
 void receiver_eval(
-    struct PublicParams *pp,
-    struct Key *csk,
+    PublicParams *pp,
+    Key *csk,
     const uint16_t *xor_inputs,
     const uint16_t *maj_inputs,
     uint128_t *outputs,

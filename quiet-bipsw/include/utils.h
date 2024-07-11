@@ -104,7 +104,7 @@ static uint128_t hex_to_uint_128(const char *hex_str)
 }
 
 static inline uint128_t universal_hash_3(
-    struct PublicParams *pp,
+    PublicParams *pp,
     uint128_t *in)
 {
     // Compute a universal hash to compress the input into a uint128

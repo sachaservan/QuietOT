@@ -10,7 +10,7 @@
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
 
-struct Params
+typedef struct
 {
     size_t key_len;
     EVP_CIPHER_CTX *hash_ctx;
@@ -18,63 +18,63 @@ struct Params
     BIGNUM *order;
     BN_CTX *ctx;
     const EC_POINT *g;
-};
+} Params;
 
-struct Key
+typedef struct
 {
     BIGNUM **key;
 
     // optional
     BIGNUM *delta;
     EC_POINT **offsets;
-};
+} Key;
 
-struct KeyCache
+typedef struct
 {
     size_t cache_bits;
     BIGNUM **cache;
-};
+} KeyCache;
 
-int setup(struct Params *pp, size_t key_len);
-int key_gen(struct Params *pp, struct Key *msk);
+int setup(Params *pp, size_t key_len);
+int key_gen(Params *pp, Key *msk);
 
 int sender_eval(
-    struct Params *pp,
-    struct KeyCache *msk_cache,
+    Params *pp,
+    KeyCache *msk_cache,
     uint128_t *inputs,
     uint128_t *outputs,
     size_t num_ots);
 
 int receiver_eval(
-    struct Params *pp,
-    struct Key *csk0,
-    struct Key *csk1,
-    struct KeyCache *csk_cache_0,
-    struct KeyCache *csk_cache_1,
+    Params *pp,
+    Key *csk0,
+    Key *csk1,
+    KeyCache *csk_cache_0,
+    KeyCache *csk_cache_1,
     uint8_t *constraint,
     uint128_t *inputs,
     uint128_t *outputs,
     size_t num_ots);
 
 int constrain_key_gen(
-    struct Params *pp,
-    struct Key *msk,
-    struct Key *csk,
+    Params *pp,
+    Key *msk,
+    Key *csk,
     uint8_t *constraint,
     size_t index);
 
 int compute_cache(
-    struct Params *pp,
+    Params *pp,
     BIGNUM **key,
-    struct KeyCache *key_cache,
+    KeyCache *key_cache,
     size_t cache_bits);
 
-void free_master_key(struct Params *pp, struct Key *msk);
-void free_constrained_key(struct Params *pp, struct Key *csk);
-void free_cache(struct Params *pp, struct KeyCache *key_cache);
-void free_public_params(struct Params *pp);
+void free_master_key(Params *pp, Key *msk);
+void free_constrained_key(Params *pp, Key *csk);
+void free_cache(Params *pp, KeyCache *key_cache);
+void free_public_params(Params *pp);
 
-static inline size_t get_curve_point_byte_size(struct Params *pp)
+static inline size_t get_curve_point_byte_size(Params *pp)
 {
     // get byte size of curve point
     size_t point_len = EC_POINT_point2oct(

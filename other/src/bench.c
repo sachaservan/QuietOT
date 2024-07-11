@@ -22,13 +22,13 @@ double benchmark_BCMPR_GAR()
 
     size_t key_len = 74; // the size of the predicate chosen in BCMPR
 
-    struct Params *pp = (struct Params *)malloc(sizeof(struct Params));
+    Params *pp = (Params *)malloc(sizeof(Params));
     setup(pp, key_len);
 
     // For benchmarking purposes, we generate two CPRF keys
     // one for each constrained PRF parameterized by set S_b
-    struct Key *msk0 = (struct Key *)malloc(sizeof(struct Key));
-    struct Key *msk1 = (struct Key *)malloc(sizeof(struct Key));
+    Key *msk0 = (Key *)malloc(sizeof(Key));
+    Key *msk1 = (Key *)malloc(sizeof(Key));
     key_gen(pp, msk0);
     key_gen(pp, msk1);
 
