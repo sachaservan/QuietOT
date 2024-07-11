@@ -6,6 +6,7 @@
 #include <openssl/rand.h>
 
 #include "params.h"
+#include "polymur.h"
 
 static inline int all_unique_indices(uint16_t *arr, size_t n)
 {
@@ -85,6 +86,20 @@ static uint128_t hex_to_uint_128(const char *hex_str)
     }
 
     return result;
+}
+
+static inline uint128_t universal_hash(struct PublicParams *pp, uint8_t *in, size_t len)
+{
+    // Compute a universal hash to compress the input into a uint128
+    // integer that we then feed into the random oracle.
+    // Because polymur_hash outputs a uint64, we hash twice with
+    // different keys and concatenate the results
+    uint128_t out = polymur_hash(
+        in, len, &pp->polymur_params0, POLYMUR_TWEAK);
+    out = out << 64;
+    out |= polymur_hash(
+        in, len, &pp->polymur_params1, POLYMUR_TWEAK);
+    return out;
 }
 
 #endif

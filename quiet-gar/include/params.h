@@ -21,6 +21,8 @@
 #define RAND_BUFFER 4
 #define RAND_OFFSET_MAX 5 // bound on the number of samples rejected
 
-#define UHASH_PRIME "7fffffffffffffffffffffffffffff61"
+#define POLYMUR_SEED0 0x28ce40f3881d9798ULL
+#define POLYMUR_SEED1 0x67ee64638656503eULL
+#define POLYMUR_TWEAK 0xdf6109d5d320a714ULL
 
 #endif

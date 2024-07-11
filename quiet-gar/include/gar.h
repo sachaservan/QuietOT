@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <openssl/evp.h>
+#include "polymur.h"
 
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
@@ -23,8 +24,8 @@ struct PublicParams
     size_t key_len;
     EVP_CIPHER_CTX *hash_ctx;
     EVP_CIPHER_CTX *prg_ctx;
-    const uint128_t *u_hash_coeffs;
-    uint128_t u_hash_mod;
+    PolymurHashParams polymur_params0;
+    PolymurHashParams polymur_params1;
 };
 
 void pp_gen(struct PublicParams *pp);
