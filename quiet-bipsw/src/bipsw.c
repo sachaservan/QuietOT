@@ -3,6 +3,7 @@
 #include "bipsw.h"
 #include "utils.h"
 #include "params.h"
+#include "polymur.h"
 
 #include <stdlib.h>
 #include <openssl/rand.h>
@@ -27,20 +28,14 @@ void pp_gen(
     RAND_bytes((uint8_t *)&hash_key, sizeof(uint128_t));
     EVP_CIPHER_CTX *hash_ctx = prf_key_gen((uint8_t *)&hash_key);
 
-    // Generate a universal hash for input compression
-    uint128_t *u_hash_coeffs = malloc(sizeof(uint128_t) * (RING_DIM + 1));
-    uint128_t p = hex_to_uint_128(UHASH_PRIME);
-
-    // TODO: technically these should be rejection sampled mod p but the difference
-    // is negligible due to how we pick p to be close to a power of 2
-    RAND_bytes((uint8_t *)u_hash_coeffs, sizeof(uint128_t) * 4);
-    for (size_t i = 0; i < RING_DIM + 1; i++)
-        u_hash_coeffs[i] %= p;
-
     pp->hash_ctx = hash_ctx;
-    pp->u_hash_coeffs = u_hash_coeffs;
     pp->prg_ctx = prg_ctx;
-    pp->u_hash_mod = p;
+
+    PolymurHashParams p0, p1;
+    polymur_init_params_from_seed(&p0, POLYMUR_SEED0);
+    polymur_init_params_from_seed(&p1, POLYMUR_SEED1);
+    pp->polymur_params0 = p0;
+    pp->polymur_params0 = p1;
 }
 
 void pp_free(struct PublicParams *pp)
@@ -352,8 +347,7 @@ void sender_eval(
     uint128_t *output;
     uint128_t *output_2;
     uint128_t *output_3;
-    uint128_t tmp_2;
-    uint128_t tmp_3[2];
+    uint128_t uhash_in[3];
 
     uint128_t *hash_in = malloc(sizeof(uint128_t) * num_ots * 6);
 
@@ -367,10 +361,10 @@ void sender_eval(
         // subtract the correction terms
         for (size_t i = 0; i < 6; i++)
         {
-            tmp_2 = output_2[0] ^ (msk->correction_2 * (i % 2));
+            uhash_in[0] = output_2[0] ^ (msk->correction_2 * (i % 2));
 
-            tmp_3[0] = output_3[0];
-            tmp_3[1] = output_3[1];
+            uhash_in[1] = output_3[0];
+            uhash_in[2] = output_3[1];
 
             // TODO [BUG]: fix this weirdness.
             // Basically there is some issue with the way the corrections are
@@ -378,17 +372,13 @@ void sender_eval(
             // swapped in this way. Removing these if statements will improve
             // efficiency but currently this is a workaround.
             if (i == 0)
-                inplace_mod_3_subr(&tmp_3[0], &msk->corrections_3[0]);
+                inplace_mod_3_subr(&uhash_in[1], &msk->corrections_3[0]);
             else if (i == 1 || i == 4)
-                inplace_mod_3_subr(&tmp_3[0], &msk->corrections_3[4]);
+                inplace_mod_3_subr(&uhash_in[1], &msk->corrections_3[4]);
             else if (i == 2 || i == 5)
-                inplace_mod_3_subr(&tmp_3[0], &msk->corrections_3[2]);
+                inplace_mod_3_subr(&uhash_in[1], &msk->corrections_3[2]);
 
-            output[i] = pp->u_hash_coeffs[0];
-            output[i] += pp->u_hash_coeffs[1] * tmp_2;
-            output[i] += pp->u_hash_coeffs[2] * tmp_3[0];
-            output[i] += pp->u_hash_coeffs[3] * tmp_3[1];
-            output[i] %= pp->u_hash_mod;
+            output[i] = universal_hash_3(pp, &uhash_in[0]);
         }
     }
 
@@ -422,14 +412,14 @@ void receiver_eval(
         num_ots);
 
     uint128_t *hash_in = malloc(sizeof(uint128_t) * num_ots);
-
+    uint128_t uhash_in[3];
     for (size_t n = 0; n < num_ots; n++)
     {
-        hash_in[n] = pp->u_hash_coeffs[0];
-        hash_in[n] += pp->u_hash_coeffs[1] * outputs_2[n];
-        hash_in[n] += pp->u_hash_coeffs[2] * outputs_3[2 * n];
-        hash_in[n] += pp->u_hash_coeffs[3] * outputs_3[2 * n + 1];
-        hash_in[n] %= pp->u_hash_mod;
+        uhash_in[0] = outputs_2[n];
+        uhash_in[1] = outputs_3[2 * n];
+        uhash_in[2] = outputs_3[2 * n + 1];
+
+        hash_in[n] = universal_hash_3(pp, &uhash_in[0]);
     }
 
     prf_batch_eval(pp->hash_ctx, &hash_in[0], &outputs[0], num_ots);

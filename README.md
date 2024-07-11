@@ -106,6 +106,9 @@ make && ./bin/bench
 }
 ```
 
+## Acknowledgements
+We use the super fast [Polymur](https://github.com/orlp/polymur-hash) hash for universal hashing. 
+
 ## ⚠️ Important Warning
 
 <b>This implementation is intended for _research purposes only_. The code has NOT been vetted by security experts.
