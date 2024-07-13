@@ -30,11 +30,9 @@ void pp_gen(
     pp->hash_ctx = hash_ctx;
     pp->prg_ctx = prg_ctx;
 
-    PolymurHashParams p0, p1;
-    polymur_init_params_from_seed(&p0, POLYMUR_SEED0);
-    polymur_init_params_from_seed(&p1, POLYMUR_SEED1);
-    pp->polymur_params0 = p0;
-    pp->polymur_params0 = p1;
+    PolymurHashParams p;
+    polymur_init_params_from_seed(&p, POLYMUR_SEED0);
+    pp->polymur_params = p;
 }
 
 void pp_free(PublicParams *pp)
@@ -325,7 +323,7 @@ void sender_eval(
     Key *msk,
     KeyCache *msk_cache,
     const uint16_t *inputs,
-    uint128_t *outputs,
+    uint64_t *outputs,
     const size_t num_ots)
 {
 
@@ -372,7 +370,7 @@ void sender_eval(
     prf_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 6 * 3);
 
     for (size_t n = 0; n < num_ots * 6; n++)
-        outputs[n] = hash_out[3 * n] ^ hash_out[3 * n + 1] ^ hash_out[3 * n + 2];
+        outputs[n] = universal_hash_3(pp, &hash_out[3 * n]);
 
     free(outputs_2);
     free(outputs_3);
@@ -385,7 +383,7 @@ void receiver_eval(
     Key *csk,
     KeyCache *csk_cache,
     const uint16_t *inputs,
-    uint128_t *outputs,
+    uint64_t *outputs,
     const size_t num_ots)
 {
     uint128_t *outputs_2;
@@ -415,7 +413,7 @@ void receiver_eval(
     prf_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 3);
 
     for (size_t n = 0; n < num_ots; n++)
-        outputs[n] = hash_out[3 * n] ^ hash_out[3 * n + 1] ^ hash_out[3 * n + 2];
+        outputs[n] = universal_hash_3(pp, &hash_out[3 * n]);
 
     free(outputs_2);
     free(outputs_3);

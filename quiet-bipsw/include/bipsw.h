@@ -30,8 +30,7 @@ typedef struct
     size_t key_len;
     EVP_CIPHER_CTX *hash_ctx;
     EVP_CIPHER_CTX *prg_ctx;
-    PolymurHashParams polymur_params0;
-    PolymurHashParams polymur_params1;
+    PolymurHashParams polymur_params;
 } PublicParams;
 
 void pp_gen(
@@ -55,7 +54,7 @@ void sender_eval(
     Key *msk,
     KeyCache *csk_cache,
     const uint16_t *inputs,
-    uint128_t *outputs,
+    uint64_t *outputs,
     const size_t num_ots);
 
 void receiver_eval(
@@ -63,7 +62,7 @@ void receiver_eval(
     Key *csk,
     KeyCache *csk_cache,
     const uint16_t *inputs,
-    uint128_t *outputs,
+    uint64_t *outputs,
     const size_t num_ots);
 
 void compute_key_caches(
