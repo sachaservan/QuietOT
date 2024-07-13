@@ -62,8 +62,6 @@ int key_gen(Params *pp, Key *msk)
     if (!BN_rand_range(msk->delta, pp->order))
         goto err;
 
-    BN_set_word(msk->delta, 2); // TODO: remove
-
     // sample Delta and offsets
     BIGNUM *delta_pow = BN_new();
     BN_set_word(delta_pow, 1);
