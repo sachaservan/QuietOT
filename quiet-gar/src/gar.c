@@ -39,11 +39,15 @@ void pp_free(PublicParams *pp)
 
 void key_gen(PublicParams *pp, Key *msk)
 {
-    msk->key_xor = malloc(sizeof(uint128_t) * KEY_LEN);
+    msk->key_xor_128 = malloc(sizeof(uint128_t) * KEY_LEN);
+    msk->key_xor_64 = malloc(sizeof(uint64_t) * KEY_LEN);
     msk->key_maj = malloc(sizeof(uint8_t) * KEY_LEN * RING_DIM);
 
-    // pack all 128 ring elements of Z_2^128 into one uint128
-    RAND_bytes((uint8_t *)msk->key_xor, sizeof(uint128_t) * KEY_LEN);
+    // pack the 128 ring elements of Z_2^(128+64) into one uint128
+    RAND_bytes((uint8_t *)msk->key_xor_128, sizeof(uint128_t) * KEY_LEN);
+
+    // pack the 64 ring elements of Z_2^(128+64) into one uint64
+    RAND_bytes((uint8_t *)msk->key_xor_64, sizeof(uint64_t) * KEY_LEN);
 
     // store each element of Z_(MAJ_LEN+1) as a uint8_t
     RAND_bytes((uint8_t *)msk->key_maj, sizeof(uint8_t) * KEY_LEN * RING_DIM);
@@ -51,10 +55,13 @@ void key_gen(PublicParams *pp, Key *msk)
         msk->key_maj[i] &= MAJ_LEN; // equivalent to %= (MAJ_LEN+1)
 
     // Sample the random Delta for the constraint key
-    RAND_bytes((uint8_t *)&msk->xor_delta, sizeof(uint128_t));
+    RAND_bytes((uint8_t *)&msk->xor_delta_128, sizeof(uint128_t));
+    RAND_bytes((uint8_t *)&msk->xor_delta_64, sizeof(uint64_t));
 
     msk->maj_delta = malloc(sizeof(uint8_t) * RING_DIM);
     RAND_bytes((uint8_t *)msk->maj_delta, sizeof(uint8_t) * RING_DIM);
+    for (int i = 0; i < RING_DIM; i++)
+        msk->maj_delta[i] &= MAJ_LEN; // equivalent to %= (MAJ_LEN+1)
 
     msk->maj_corrections = malloc(sizeof(uint8_t) * RING_DIM * NUM_COMBOS);
     compute_correction_terms(msk->maj_delta, &msk->maj_corrections[0]);
@@ -67,10 +74,14 @@ void constrain_key_gen(
     uint8_t *constraint)
 {
 
-    csk->key_xor = malloc(sizeof(uint128_t) * KEY_LEN);
+    csk->key_xor_128 = malloc(sizeof(uint128_t) * KEY_LEN);
+    csk->key_xor_64 = malloc(sizeof(uint64_t) * KEY_LEN);
     csk->key_maj = malloc(sizeof(uint8_t) * KEY_LEN * RING_DIM);
     for (size_t i = 0; i < KEY_LEN; i++)
-        csk->key_xor[i] = msk->key_xor[i] ^ (msk->xor_delta * constraint[i]);
+    {
+        csk->key_xor_128[i] = msk->key_xor_128[i] ^ (msk->xor_delta_128 * constraint[i]);
+        csk->key_xor_64[i] = msk->key_xor_64[i] ^ (msk->xor_delta_64 * constraint[i]);
+    }
 
     for (size_t i = 0; i < KEY_LEN; i++)
     {
@@ -123,19 +134,28 @@ static inline void common_eval(
     // pointer to the current key block
     const uint8_t *maj_key_block;
 
-    uint128_t xor ;         // xor output
+    uint128_t xor_128; // xor 128 output
+    uint64_t xor_64;   // xor 64 output
+
     uint16_t maj[RING_DIM]; // maj output
 
-    uint8_t i, j;
+    uint16_t i, j;
     for (size_t n = 0; n < num_ots; n++)
     {
         xor_input = &xor_inputs[xor_input_offset];
         maj_input = &maj_inputs[maj_input_offset];
 
         // do the first iteration separately to initialize xor
-        xor = key->key_xor[xor_input[0]];
+        xor_128 = key->key_xor_128[xor_input[0]];
+        xor_64 = key->key_xor_64[xor_input[0]];
         for (i = 1; i < XOR_LEN; i++)
-            xor ^= key->key_xor[xor_input[i]];
+        {
+            xor_128 ^= key->key_xor_128[xor_input[i]];
+            xor_64 ^= key->key_xor_64[xor_input[i]];
+        }
+
+        xor_outputs[2 * n] = xor_128;
+        xor_outputs[2 * n + 1] = xor_64;
 
         // do the first iteration separately to initialize maj[i]
         maj_key_block = &key->key_maj[maj_input[0] * RING_DIM];
@@ -150,8 +170,6 @@ static inline void common_eval(
             for (j = 0; j < RING_DIM; j++)
                 maj[j] += maj_key_block[j];
         }
-
-        xor_outputs[n] = xor;
 
         maj_output = &maj_outputs[n * RING_DIM];
         for (j = 0; j < RING_DIM; j++)
@@ -171,7 +189,7 @@ void sender_eval(
     const size_t num_ots)
 {
 
-    uint128_t *xor_outputs = malloc(sizeof(uint128_t) * num_ots);
+    uint128_t *xor_outputs = malloc(sizeof(uint128_t) * num_ots * 2);
     uint8_t *maj_outputs = malloc(sizeof(uint8_t) * num_ots * RING_DIM);
     uint8_t *uhash_in = malloc(sizeof(uint8_t) * RING_DIM);
 
@@ -184,8 +202,8 @@ void sender_eval(
         num_ots);
 
     // to_hash structure: [xor0, xor1, maj_0 ... maj_k]
-    uint128_t *hash_in_xor = malloc(sizeof(uint128_t) * num_ots * 2);
-    uint128_t *hash_out_xor = malloc(sizeof(uint128_t) * num_ots * 2);
+    uint128_t *hash_in_xor = malloc(sizeof(uint128_t) * num_ots * 4);
+    uint128_t *hash_out_xor = malloc(sizeof(uint128_t) * num_ots * 4);
 
     uint128_t *hash_in_maj = malloc(sizeof(uint128_t) * num_ots * (MAJ_LEN + 1));
     uint128_t *hash_out_maj = malloc(sizeof(uint128_t) * num_ots * (MAJ_LEN + 1));
@@ -193,12 +211,16 @@ void sender_eval(
     // compute the values for all xor hash components
     for (size_t n = 0; n < num_ots; n++)
     {
-        hash_in_xor[n * 2] = xor_outputs[n];
-        hash_in_xor[n * 2 + 1] = xor_outputs[n] ^ msk->xor_delta;
+        hash_in_xor[4 * n] = xor_outputs[2 * n];
+        hash_in_xor[4 * n + 1] = xor_outputs[2 * n + 1];
+
+        hash_in_xor[4 * n + 2] = xor_outputs[2 * n] ^ msk->xor_delta_128;
+        hash_in_xor[4 * n + 3] = xor_outputs[2 * n + 1] ^ msk->xor_delta_64;
     }
 
     // variables used in the next loop
     const uint8_t *maj;
+    uint128_t xor_out, maj_out;
     size_t index;
     const uint8_t *correction;
     size_t i, j;
@@ -230,7 +252,7 @@ void sender_eval(
         }
     }
 
-    prf_batch_eval(pp->hash_ctx, &hash_in_xor[0], &hash_out_xor[0], num_ots * 2);
+    prf_batch_eval(pp->hash_ctx, &hash_in_xor[0], &hash_out_xor[0], num_ots * 4);
     prf_batch_eval(pp->hash_ctx, &hash_in_maj[0], &hash_out_maj[0], num_ots * (MAJ_LEN + 1));
 
     // XOR both outputs together
@@ -242,8 +264,12 @@ void sender_eval(
         for (i = 0; i < (MAJ_LEN + 1); i++)
         {
             // the maj part is reused for both the lower and upper half
-            outputs[out_index_0 + i] = hash_out_xor[2 * n] ^ hash_out_maj[out_index_0 / 2 + i];
-            outputs[out_index_1 + i] = hash_out_xor[2 * n + 1] ^ hash_out_maj[out_index_0 / 2 + i];
+            maj_out = hash_out_maj[out_index_0 / 2 + i];
+            xor_out = hash_out_xor[4 * n] ^ hash_out_xor[4 * n + 1];
+            outputs[out_index_0 + i] = xor_out ^ maj_out;
+
+            xor_out = hash_out_xor[4 * n + 2] ^ hash_out_xor[4 * n + 3];
+            outputs[out_index_1 + i] = xor_out ^ maj_out;
         }
     }
 
@@ -264,11 +290,11 @@ void receiver_eval(
     const size_t num_ots)
 {
 
-    uint128_t *xor_outputs = malloc(sizeof(uint128_t) * num_ots);
+    uint128_t *xor_outputs = malloc(sizeof(uint128_t) * num_ots * 2);
     uint8_t *maj_outputs = malloc(sizeof(uint8_t) * num_ots * RING_DIM);
     uint8_t *uhash_in = malloc(sizeof(uint8_t) * RING_DIM);
 
-    uint128_t *hash_out_xor = malloc(sizeof(uint128_t) * num_ots);
+    uint128_t *hash_out_xor = malloc(sizeof(uint128_t) * num_ots * 2);
     uint128_t *hash_in_maj = malloc(sizeof(uint128_t) * num_ots);
     uint128_t *hash_out_maj = malloc(sizeof(uint128_t) * num_ots);
 
@@ -280,7 +306,7 @@ void receiver_eval(
         maj_outputs,
         num_ots);
 
-    uint128_t tmp;
+    uint128_t xor_out;
     uint8_t *maj;
 
     size_t j;
@@ -290,12 +316,15 @@ void receiver_eval(
         hash_in_maj[n] = universal_hash(pp, uhash_in, RING_DIM);
     }
 
-    prf_batch_eval(pp->hash_ctx, &xor_outputs[0], &hash_out_xor[0], num_ots);
+    prf_batch_eval(pp->hash_ctx, &xor_outputs[0], &hash_out_xor[0], num_ots * 2);
     prf_batch_eval(pp->hash_ctx, &hash_in_maj[0], &hash_out_maj[0], num_ots);
 
     // XOR both outputs together
     for (size_t n = 0; n < num_ots; n++)
-        outputs[n] = hash_out_xor[n] ^ hash_out_maj[n];
+    {
+        xor_out = hash_out_xor[2 * n] ^ hash_out_xor[2 * n + 1];
+        outputs[n] = xor_out ^ hash_out_maj[n];
+    }
 
     free(xor_outputs);
     free(maj_outputs);

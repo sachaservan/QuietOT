@@ -10,12 +10,14 @@ typedef unsigned __int128 uint128_t;
 
 typedef struct
 {
-    uint128_t *key_xor;
+    uint128_t *key_xor_128;
+    uint64_t *key_xor_64;
     uint8_t *key_maj;
 
     // optional fields (only present for MSK)
     uint8_t *maj_corrections;
-    uint128_t xor_delta;
+    uint128_t xor_delta_128;
+    uint64_t xor_delta_64;
     uint8_t *maj_delta;
 } Key;
 
