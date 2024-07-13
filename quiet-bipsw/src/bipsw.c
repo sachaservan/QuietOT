@@ -3,7 +3,6 @@
 #include "bipsw.h"
 #include "utils.h"
 #include "params.h"
-#include "polymur.h"
 
 #include <stdlib.h>
 #include <openssl/rand.h>
@@ -347,46 +346,38 @@ void sender_eval(
     uint128_t *output;
     uint128_t *output_2;
     uint128_t *output_3;
-    uint128_t uhash_in[3];
 
-    uint128_t *hash_in = malloc(sizeof(uint128_t) * num_ots * 6);
+    uint128_t *hash_in = malloc(sizeof(uint128_t) * num_ots * 6 * 3);
+    uint128_t *hash_out = malloc(sizeof(uint128_t) * num_ots * 6 * 3);
 
     size_t output_offset = 0;
     for (size_t n = 0; n < num_ots; n++)
     {
-        output = &hash_in[n * 6];
+        output = &hash_in[n * 6 * 3];
         output_2 = &outputs_2[n];
         output_3 = &outputs_3[2 * n];
 
         // subtract the correction terms
         for (size_t i = 0; i < 6; i++)
         {
-            uhash_in[0] = output_2[0] ^ (msk->correction_2 * (i % 2));
+            output[3 * i] = output_2[0] ^ (msk->correction_2 * (i % 2));
 
-            uhash_in[1] = output_3[0];
-            uhash_in[2] = output_3[1];
+            output[3 * i + 1] = output_3[0];
+            output[3 * i + 2] = output_3[1];
 
-            // TODO [BUG]: fix this weirdness.
-            // Basically there is some issue with the way the corrections are
-            // computed for the Z3 case. It's unclear why the indexing is
-            // swapped in this way. Removing these if statements will improve
-            // efficiency but currently this is a workaround.
-            if (i == 0)
-                inplace_mod_3_subr(&uhash_in[1], &msk->corrections_3[0]);
-            else if (i == 1 || i == 4)
-                inplace_mod_3_subr(&uhash_in[1], &msk->corrections_3[4]);
-            else if (i == 2 || i == 5)
-                inplace_mod_3_subr(&uhash_in[1], &msk->corrections_3[2]);
-
-            output[i] = universal_hash_3(pp, &uhash_in[0]);
+            inplace_mod_3_subr(&output[3 * i + 1], &msk->corrections_3[2 * i]);
         }
     }
 
-    prf_batch_eval(pp->hash_ctx, &hash_in[0], &outputs[0], num_ots * 6);
+    prf_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 6 * 3);
+
+    for (size_t n = 0; n < num_ots * 6; n++)
+        outputs[n] = hash_out[3 * n] ^ hash_out[3 * n + 1] ^ hash_out[3 * n + 2];
 
     free(outputs_2);
     free(outputs_3);
     free(hash_in);
+    free(hash_out);
 }
 
 void receiver_eval(
@@ -411,22 +402,25 @@ void receiver_eval(
         outputs_3,
         num_ots);
 
-    uint128_t *hash_in = malloc(sizeof(uint128_t) * num_ots);
-    uint128_t uhash_in[3];
+    uint128_t *hash_in = malloc(sizeof(uint128_t) * num_ots * 3);
+    uint128_t *hash_out = malloc(sizeof(uint128_t) * num_ots * 3);
+
     for (size_t n = 0; n < num_ots; n++)
     {
-        uhash_in[0] = outputs_2[n];
-        uhash_in[1] = outputs_3[2 * n];
-        uhash_in[2] = outputs_3[2 * n + 1];
-
-        hash_in[n] = universal_hash_3(pp, &uhash_in[0]);
+        hash_in[3 * n] = outputs_2[n];
+        hash_in[3 * n + 1] = outputs_3[2 * n];
+        hash_in[3 * n + 2] = outputs_3[2 * n + 1];
     }
 
-    prf_batch_eval(pp->hash_ctx, &hash_in[0], &outputs[0], num_ots);
+    prf_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 3);
+
+    for (size_t n = 0; n < num_ots; n++)
+        outputs[n] = hash_out[3 * n] ^ hash_out[3 * n + 1] ^ hash_out[3 * n + 2];
 
     free(outputs_2);
     free(outputs_3);
     free(hash_in);
+    free(hash_out);
 }
 
 // Pre-compute corrections terms
@@ -454,6 +448,7 @@ void compute_correction_terms(
         {
             msk->corrections_3[2 * i] = 0;
             msk->corrections_3[2 * i + 1] = 0;
+            continue;
         }
 
         packed_3[0] = 0;
@@ -463,7 +458,7 @@ void compute_correction_terms(
         for (size_t j = 0; j < RING_DIM; j++)
         {
 
-            prod = ((i * delta[j]) % 6) % 3;
+            prod = 3 - ((i * delta[j]) % 6) % 3; // need to negate (mod 3)
 
             if (prod == 2)
             {

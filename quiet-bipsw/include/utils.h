@@ -103,20 +103,4 @@ static uint128_t hex_to_uint_128(const char *hex_str)
     return result;
 }
 
-static inline uint128_t universal_hash_3(
-    PublicParams *pp,
-    uint128_t *in)
-{
-    // Compute a universal hash to compress the input into a uint128
-    // integer that we then feed into the random oracle.
-    // Because polymur_hash outputs a uint64, we hash twice with
-    // different keys and concatenate the results
-    uint128_t out = polymur_hash(
-        (uint8_t *)in, 3 * 16, &pp->polymur_params0, POLYMUR_TWEAK);
-    out = out << 64;
-    out |= polymur_hash(
-        (uint8_t *)in, 3 * 16, &pp->polymur_params1, POLYMUR_TWEAK);
-    return out;
-}
-
 #endif

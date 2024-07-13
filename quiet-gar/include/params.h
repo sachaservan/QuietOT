@@ -15,7 +15,7 @@
 // #define XOR_LEN 7
 // #define MAJ_LEN 31
 
-#define RING_DIM 128
+#define RING_DIM (128 + 64)
 #define NUM_COMBOS (2 * (MAJ_LEN + 1))
 
 #define RAND_BUFFER 4
