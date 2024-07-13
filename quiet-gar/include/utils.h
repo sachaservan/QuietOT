@@ -43,13 +43,9 @@ static inline int sample_random_distinct_key_indices(
     j = 0;
     while (i < num)
     {
-        // TODO[optimization]: skip this bias check?
-        // very low probability of happening p=(2^16 - 65160)/2^16 ~ 0.6%
-        // if (randomness[j] < BIAS_CONDITION_FOR_KEY_SAMPLING)
-        // rand_indices[i++] = randomness[j] & KEY_LEN;
-
+        // WARNING: assumes that KEY_LEN is a power of 2;
+        // otherwise need to perform rejection sampling
         rand_indices[i++] = randomness[j] & (KEY_LEN - 1); // if power of 2
-
         j++;
     }
 

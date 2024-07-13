@@ -365,17 +365,7 @@ void sender_eval(
             output[3 * i + 1] = output_3[0];
             output[3 * i + 2] = output_3[1];
 
-            // TODO [BUG]: fix this weirdness.
-            // Basically there is some issue with the way the corrections are
-            // computed for the Z3 case. It's unclear why the indexing is
-            // swapped in this way. Removing these if statements will improve
-            // efficiency but currently this is a workaround.
-            if (i == 0)
-                inplace_mod_3_subr(&output[3 * i + 1], &msk->corrections_3[0]);
-            else if (i == 1 || i == 4)
-                inplace_mod_3_subr(&output[3 * i + 1], &msk->corrections_3[4]);
-            else if (i == 2 || i == 5)
-                inplace_mod_3_subr(&output[3 * i + 1], &msk->corrections_3[2]);
+            inplace_mod_3_subr(&output[3 * i + 1], &msk->corrections_3[2 * i]);
         }
     }
 
@@ -458,6 +448,7 @@ void compute_correction_terms(
         {
             msk->corrections_3[2 * i] = 0;
             msk->corrections_3[2 * i + 1] = 0;
+            continue;
         }
 
         packed_3[0] = 0;
@@ -467,7 +458,7 @@ void compute_correction_terms(
         for (size_t j = 0; j < RING_DIM; j++)
         {
 
-            prod = ((i * delta[j]) % 6) % 3;
+            prod = 3 - ((i * delta[j]) % 6) % 3; // need to negate (mod 3)
 
             if (prod == 2)
             {
