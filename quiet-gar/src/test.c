@@ -40,8 +40,8 @@ double benchmarkOTs()
     uint16_t *maj_inputs = malloc(sizeof(uint16_t) * MAJ_LEN * num_ots);
     GenerateRandomInputs(pp, xor_inputs, maj_inputs, num_ots);
 
-    uint128_t *outputs_sender = malloc(sizeof(uint128_t) * num_ots * NUM_COMBOS);
-    uint128_t *outputs_receiver = malloc(sizeof(uint128_t) * num_ots);
+    uint8_t *outputs_sender = malloc(sizeof(uint8_t) * num_ots * NUM_COMBOS);
+    uint8_t *outputs_receiver = malloc(sizeof(uint8_t) * num_ots);
 
     sender_eval(pp,
                 msk,
