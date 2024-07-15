@@ -5,6 +5,10 @@
 #include <openssl/evp.h>
 #include "polymur.h"
 
+#ifdef AVX
+#include <immintrin.h>
+#endif
+
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
 
@@ -23,6 +27,11 @@ typedef struct
 {
     uint128_t *cache_2;
     uint128_t *cache_3;
+#ifdef AVX
+    __m512i *cache_2_avx;
+    __m512i *cache_3_avx;
+#endif
+
 } KeyCache;
 
 typedef struct

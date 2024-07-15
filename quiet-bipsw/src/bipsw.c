@@ -177,8 +177,6 @@ static inline void common_eval(
 
 #ifdef AVX
     size_t mem_size = num_blocks * cache_block_size * sizeof(__m512i);
-    __m512i * key_cache->cache_2_avx;
-    __m512i * key_cache->cache_3_avx;
 
     // allocate aligned memory for AVX512
     posix_memalign((void **)&key_cache->cache_2_avx, 64, mem_size);
