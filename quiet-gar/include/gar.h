@@ -26,6 +26,7 @@ typedef struct
     size_t key_len;
     EVP_CIPHER_CTX *hash_ctx0;
     EVP_CIPHER_CTX *hash_ctx1;
+    EVP_CIPHER_CTX *hash_ctx2;
     EVP_CIPHER_CTX *prg_ctx;
     PolymurHashParams polymur_params0;
     PolymurHashParams polymur_params1;
