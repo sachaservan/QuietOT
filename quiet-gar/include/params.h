@@ -7,11 +7,13 @@
 
 // PARAMETER SET #1: (Stretch=2^36; Security=2^232)
 #define KEY_LEN 2048
+#define LOG_KEY_LEN 11
 #define XOR_LEN 5
 #define MAJ_LEN 15
 
 // PARAMETER SET #2: (Stretch=2^36; Security=2^147)
 // #define KEY_LEN 512
+// #define LOG_KEY_LEN 9
 // #define XOR_LEN 7
 // #define MAJ_LEN 31
 

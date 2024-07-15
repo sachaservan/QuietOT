@@ -24,7 +24,8 @@ typedef struct
 typedef struct
 {
     size_t key_len;
-    EVP_CIPHER_CTX *hash_ctx;
+    EVP_CIPHER_CTX *hash_ctx0;
+    EVP_CIPHER_CTX *hash_ctx1;
     EVP_CIPHER_CTX *prg_ctx;
     PolymurHashParams polymur_params0;
     PolymurHashParams polymur_params1;
@@ -52,7 +53,7 @@ void sender_eval(
     Key *msk,
     const uint16_t *xor_inputs,
     const uint16_t *maj_inputs,
-    uint128_t *outputs,
+    uint8_t *outputs,
     const size_t num_ots);
 
 void receiver_eval(
@@ -60,7 +61,7 @@ void receiver_eval(
     Key *csk,
     const uint16_t *xor_inputs,
     const uint16_t *maj_inputs,
-    uint128_t *outputs,
+    uint8_t *outputs,
     const size_t num_ots);
 
 void compute_correction_terms(

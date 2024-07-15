@@ -355,14 +355,40 @@ void sender_eval(
         output_2 = &outputs_2[n];
         output_3 = &outputs_3[2 * n];
 
+        uint8_t idx_2, idx_30, idx_31;
+
+        // we pack 128-log_3(128) bits of the input into the Z3 blocks
+        // before feeding the whole thing into AES to instantiate H(k||x)
+        // where H is a random oracle.
+        size_t idx_in_chunk = 6 * n;
+        // Note: we pack 6*16 = 96 bits of the input, where 16 = CACHE_BITS
+        // TODO: remove dependency on CACHE_BITS = 16
+
         // subtract the correction terms
         for (size_t i = 0; i < 6; i++)
         {
-            chunk_hash_in[3 * i] = output_2[0] ^ (msk->correction_2 * (i % 2));
-            chunk_hash_in[3 * i + 1] = output_3[0];
-            chunk_hash_in[3 * i + 2] = output_3[1];
+            // indices of the mod2 and mod3 components
+            idx_2 = 3 * i;
+            idx_30 = 3 * i + 1;
+            idx_31 = 3 * i + 2;
 
-            inplace_mod_3_subr(&chunk_hash_in[3 * i + 1], &msk->corrections_3[2 * i]);
+            chunk_hash_in[idx_2] = output_2[0] ^ (msk->correction_2 * (i % 2));
+            chunk_hash_in[idx_30] = output_3[0];
+            chunk_hash_in[idx_31] = output_3[1];
+
+            inplace_mod_3_subr(&chunk_hash_in[idx_30], &msk->corrections_3[2 * i]);
+
+            chunk_hash_in[idx_30] ^= inputs[idx_in_chunk];
+            chunk_hash_in[idx_30] <<= 16; // 16 = CACHE_BITS
+            chunk_hash_in[idx_30] ^= (inputs[idx_in_chunk + 1]);
+            chunk_hash_in[idx_30] <<= 16;
+            chunk_hash_in[idx_30] ^= (inputs[idx_in_chunk + 2]);
+
+            chunk_hash_in[idx_31] ^= inputs[idx_in_chunk + 3];
+            chunk_hash_in[idx_31] <<= 16;
+            chunk_hash_in[idx_31] ^= (inputs[idx_in_chunk + 4]);
+            chunk_hash_in[idx_31] <<= 16;
+            chunk_hash_in[idx_31] ^= (inputs[idx_in_chunk + 5]);
         }
     }
 
@@ -407,11 +433,31 @@ void receiver_eval(
     uint128_t *hash_in = malloc(sizeof(uint128_t) * num_ots * 3);
     uint128_t *hash_out = malloc(sizeof(uint128_t) * num_ots * 3);
 
+    size_t idx_2, idx_30, idx_31;
+    size_t idx_in_chunk;
     for (size_t n = 0; n < num_ots; n++)
     {
-        hash_in[3 * n] = outputs_2[n];
-        hash_in[3 * n + 1] = outputs_3[2 * n];
-        hash_in[3 * n + 2] = outputs_3[2 * n + 1];
+        // indices of the mod2 and mod3 components
+        idx_2 = 3 * n;
+        idx_30 = 3 * n + 1;
+        idx_31 = 3 * n + 2;
+
+        hash_in[idx_2] = outputs_2[n];
+        hash_in[idx_30] = outputs_3[2 * n];
+        hash_in[idx_31] = outputs_3[2 * n + 1];
+
+        idx_in_chunk = 6 * n;
+        hash_in[idx_30] ^= inputs[idx_in_chunk];
+        hash_in[idx_30] <<= 16;
+        hash_in[idx_30] ^= (inputs[idx_in_chunk + 1]);
+        hash_in[idx_30] <<= 16;
+        hash_in[idx_30] ^= (inputs[idx_in_chunk + 2]);
+
+        hash_in[idx_31] ^= inputs[idx_in_chunk + 3];
+        hash_in[idx_31] <<= 16;
+        hash_in[idx_31] ^= (inputs[idx_in_chunk + 4]);
+        hash_in[idx_31] <<= 16;
+        hash_in[idx_31] ^= (inputs[idx_in_chunk + 5]);
     }
 
     aes_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 3);
