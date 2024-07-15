@@ -143,7 +143,7 @@ double benchmarkOTs()
         }
     }
 
-    printf("Index dist: (%i, %i, %i, %i, %i, %i)\n", dist[0], dist[1], dist[2], dist[3], dist[4], dist[5]);
+    // printf("Index dist: (%i, %i, %i, %i, %i, %i)\n", dist[0], dist[1], dist[2], dist[3], dist[4], dist[5]);
 
     if (not_found != 0)
     {
