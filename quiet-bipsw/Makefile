@@ -4,8 +4,8 @@ CFLAGS = -O3 -I./include -I../pr -I/opt/homebrew/opt/openssl/include
 LDFLAGS = -march=native -lcrypto -lssl -lm -maes -ffast-math
 
 ifeq ($(AVX),1)
-    CFLAGS += -DAVX
-    LDFLAGS += -mavx512f
+ CFLAGS += -DAVX -mavx512f
+ LDFLAGS += -mavx512f
 endif
 
 SRC = $(wildcard ./src/*.c)
