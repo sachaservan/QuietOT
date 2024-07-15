@@ -351,7 +351,7 @@ void sender_eval(
 
         uint8_t idx_2, idx_30, idx_31;
 
-        // we pack 128-log_3(128) bits of the input into the Z3 blocks
+        // we pack 128-log_3(2^128) bits of the input into the Z3 blocks
         // before feeding the whole thing into AES to instantiate H(k||x)
         // where H is a random oracle.
         size_t idx_in_chunk = 6 * n;
