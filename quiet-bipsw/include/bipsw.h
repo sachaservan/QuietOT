@@ -54,7 +54,7 @@ void sender_eval(
     Key *msk,
     KeyCache *csk_cache,
     const uint16_t *inputs,
-    uint64_t *outputs,
+    uint8_t *outputs,
     const size_t num_ots);
 
 void receiver_eval(
@@ -62,7 +62,7 @@ void receiver_eval(
     Key *csk,
     KeyCache *csk_cache,
     const uint16_t *inputs,
-    uint64_t *outputs,
+    uint8_t *outputs,
     const size_t num_ots);
 
 void compute_key_caches(

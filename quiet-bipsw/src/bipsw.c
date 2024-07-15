@@ -323,7 +323,7 @@ void sender_eval(
     Key *msk,
     KeyCache *msk_cache,
     const uint16_t *inputs,
-    uint64_t *outputs,
+    uint8_t *outputs,
     const size_t num_ots)
 {
 
@@ -369,8 +369,9 @@ void sender_eval(
 
     prf_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 6 * 3);
 
+    // apply universal hash to the output blocks and truncate it to one bit
     for (size_t n = 0; n < num_ots * 6; n++)
-        outputs[n] = universal_hash_3(pp, &hash_out[3 * n]);
+        outputs[n] = universal_hash_3(pp, &hash_out[3 * n]) & 1;
 
     free(outputs_2);
     free(outputs_3);
@@ -383,7 +384,7 @@ void receiver_eval(
     Key *csk,
     KeyCache *csk_cache,
     const uint16_t *inputs,
-    uint64_t *outputs,
+    uint8_t *outputs,
     const size_t num_ots)
 {
     uint128_t *outputs_2;
@@ -412,8 +413,9 @@ void receiver_eval(
 
     prf_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 3);
 
+    // apply universal hash to the output blocks and truncate it to one bit
     for (size_t n = 0; n < num_ots; n++)
-        outputs[n] = universal_hash_3(pp, &hash_out[3 * n]);
+        outputs[n] = universal_hash_3(pp, &hash_out[3 * n]) & 1;
 
     free(outputs_2);
     free(outputs_3);

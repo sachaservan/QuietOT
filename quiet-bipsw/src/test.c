@@ -69,10 +69,10 @@ double benchmarkOTs()
     // Benchmarks and tests
     // **********************************
     uint16_t *inputs = (uint16_t *)malloc(sizeof(uint16_t) * (KEY_LEN / CACHE_BITS) * num_inputs);
-    uint64_t *outputs_sender;
-    uint64_t *outputs_receiver;
-    posix_memalign((void **)&outputs_sender, 64, num_outputs * 6 * sizeof(uint64_t));
-    posix_memalign((void **)&outputs_receiver, 64, num_outputs * sizeof(uint64_t));
+    uint8_t *outputs_sender;
+    uint8_t *outputs_receiver;
+    posix_memalign((void **)&outputs_sender, 64, num_outputs * 6 * sizeof(uint8_t));
+    posix_memalign((void **)&outputs_receiver, 64, num_outputs * sizeof(uint8_t));
 
     clock_t t = clock();
 
