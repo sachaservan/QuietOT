@@ -29,10 +29,6 @@ void pp_gen(
 
     pp->hash_ctx = hash_ctx;
     pp->prg_ctx = prg_ctx;
-
-    PolymurHashParams p;
-    polymur_init_params_from_seed(&p, POLYMUR_SEED0);
-    pp->polymur_params = p;
 }
 
 void pp_free(PublicParams *pp)
@@ -378,6 +374,7 @@ void sender_eval(
 
             inplace_mod_3_subr(&chunk_hash_in[idx_30], &msk->corrections_3[2 * i]);
 
+            // append the input string to the last chunks of the mod3 components
             chunk_hash_in[idx_30] ^= inputs[idx_in_chunk];
             chunk_hash_in[idx_30] <<= 16; // 16 = CACHE_BITS
             chunk_hash_in[idx_30] ^= (inputs[idx_in_chunk + 1]);
@@ -398,9 +395,9 @@ void sender_eval(
     // https://eprint.iacr.org/2019/074.pdf
     aes_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 6 * 3);
 
-    // apply universal hash to the output blocks and truncate it to one bit
+    // xor the output blocks and truncate to one bit
     for (size_t n = 0; n < num_ots * 6; n++)
-        outputs[n] = universal_hash_3(pp, &hash_out[3 * n]) & 1;
+        outputs[n] = (hash_out[3 * n] ^ hash_out[3 * n + 1] ^ hash_out[3 * n + 2]) & 1;
 
     free(outputs_2);
     free(outputs_3);
@@ -460,11 +457,12 @@ void receiver_eval(
         hash_in[idx_31] ^= (inputs[idx_in_chunk + 5]);
     }
 
+    // see comment in sender_eval
     aes_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 3);
 
-    // apply universal hash to the output blocks and truncate it to one bit
+    // xor the output blocks and truncate to one bit
     for (size_t n = 0; n < num_ots; n++)
-        outputs[n] = universal_hash_3(pp, &hash_out[3 * n]) & 1;
+        outputs[n] = (hash_out[3 * n] ^ hash_out[3 * n + 1] ^ hash_out[3 * n + 2]) & 1;
 
     free(outputs_2);
     free(outputs_3);

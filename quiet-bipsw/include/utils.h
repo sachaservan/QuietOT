@@ -6,7 +6,6 @@
 #include <openssl/rand.h>
 
 #include "params.h"
-#include "polymur.h"
 
 static inline void sample_mod_6(uint8_t *outputs, size_t num)
 {
@@ -102,16 +101,6 @@ static uint128_t hex_to_uint_128(const char *hex_str)
     }
 
     return result;
-}
-
-static inline uint32_t universal_hash_3(
-    PublicParams *pp,
-    uint128_t *in)
-{
-    // Compute a universal hash to compress the input into a uint64
-    uint64_t out = polymur_hash(
-        (uint8_t *)in, 3 * 16, &pp->polymur_params, POLYMUR_TWEAK);
-    return out;
 }
 
 #endif

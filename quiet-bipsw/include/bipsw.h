@@ -30,7 +30,6 @@ typedef struct
     size_t key_len;
     EVP_CIPHER_CTX *hash_ctx;
     EVP_CIPHER_CTX *prg_ctx;
-    PolymurHashParams polymur_params;
 } PublicParams;
 
 void pp_gen(
