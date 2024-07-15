@@ -341,7 +341,7 @@ void sender_eval(
         outputs_3,
         num_ots);
 
-    uint128_t *output;
+    uint128_t *chunk_hash_in;
     uint128_t *output_2;
     uint128_t *output_3;
 
@@ -351,23 +351,26 @@ void sender_eval(
     size_t output_offset = 0;
     for (size_t n = 0; n < num_ots; n++)
     {
-        output = &hash_in[n * 6 * 3];
+        chunk_hash_in = &hash_in[n * 6 * 3];
         output_2 = &outputs_2[n];
         output_3 = &outputs_3[2 * n];
 
         // subtract the correction terms
         for (size_t i = 0; i < 6; i++)
         {
-            output[3 * i] = output_2[0] ^ (msk->correction_2 * (i % 2));
+            chunk_hash_in[3 * i] = output_2[0] ^ (msk->correction_2 * (i % 2));
+            chunk_hash_in[3 * i + 1] = output_3[0];
+            chunk_hash_in[3 * i + 2] = output_3[1];
 
-            output[3 * i + 1] = output_3[0];
-            output[3 * i + 2] = output_3[1];
-
-            inplace_mod_3_subr(&output[3 * i + 1], &msk->corrections_3[2 * i]);
+            inplace_mod_3_subr(&chunk_hash_in[3 * i + 1], &msk->corrections_3[2 * i]);
         }
     }
 
-    prf_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 6 * 3);
+    // aes_batch_eval doesn't xor the input with the cipher output
+    // but this is still a okay in the ideal cipher model since we
+    // truncate the output to one bit anyway, as explained in:
+    // https://eprint.iacr.org/2019/074.pdf
+    aes_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 6 * 3);
 
     // apply universal hash to the output blocks and truncate it to one bit
     for (size_t n = 0; n < num_ots * 6; n++)
@@ -411,7 +414,7 @@ void receiver_eval(
         hash_in[3 * n + 2] = outputs_3[2 * n + 1];
     }
 
-    prf_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 3);
+    aes_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 3);
 
     // apply universal hash to the output blocks and truncate it to one bit
     for (size_t n = 0; n < num_ots; n++)
