@@ -24,8 +24,14 @@ void pp_gen(PublicParams *pp)
     RAND_bytes((uint8_t *)&hash_key1, sizeof(uint128_t));
     EVP_CIPHER_CTX *hash_ctx1 = prf_key_gen((uint8_t *)&hash_key1);
 
+    // Generate hash key (for random oracle)
+    uint128_t hash_key2;
+    RAND_bytes((uint8_t *)&hash_key2, sizeof(uint128_t));
+    EVP_CIPHER_CTX *hash_ctx2 = prf_key_gen((uint8_t *)&hash_key2);
+
     pp->hash_ctx0 = hash_ctx0;
     pp->hash_ctx1 = hash_ctx1;
+    pp->hash_ctx2 = hash_ctx2;
 
     pp->prg_ctx = prg_ctx;
 
@@ -41,6 +47,7 @@ void pp_free(PublicParams *pp)
 {
     destroy_ctx_key(pp->hash_ctx0);
     destroy_ctx_key(pp->hash_ctx1);
+    destroy_ctx_key(pp->hash_ctx2);
     destroy_ctx_key(pp->prg_ctx);
     free(pp);
 }
@@ -199,7 +206,6 @@ void sender_eval(
 
     uint128_t *xor_outputs = malloc(sizeof(uint128_t) * num_ots * 2);
     uint8_t *maj_outputs = malloc(sizeof(uint8_t) * num_ots * RING_DIM);
-    uint8_t *hash_in = malloc(sizeof(uint8_t) * (RING_DIM + XOR_LEN + MAJ_LEN));
 
     common_eval(
         msk,
@@ -216,6 +222,10 @@ void sender_eval(
     uint128_t *hash_in_maj = malloc(sizeof(uint128_t) * num_ots * (MAJ_LEN + 1));
     uint128_t *hash_out_maj = malloc(sizeof(uint128_t) * num_ots * (MAJ_LEN + 1));
 
+    uint8_t *uhash_in = malloc(sizeof(uint8_t) * (RING_DIM + XOR_LEN + MAJ_LEN));
+    uint128_t *hash_in_x = malloc(sizeof(uint128_t) * num_ots);
+    uint128_t *hash_out_x = malloc(sizeof(uint128_t) * num_ots);
+
     // compute the values for all xor hash components
     for (size_t n = 0; n < num_ots; n++)
     {
@@ -228,7 +238,7 @@ void sender_eval(
 
     // variables used in the next loop
     const uint8_t *maj;
-    uint128_t xor_out, maj_out;
+    uint128_t xor_out, maj_out, x_out;
     size_t index;
     const uint8_t *correction;
     size_t i, j;
@@ -252,16 +262,17 @@ void sender_eval(
             correction = &msk->maj_corrections[RING_DIM * i];
 
             for (j = 0; j < RING_DIM; j++)
-                hash_in[j] = ((maj[j] + correction[j]) & MAJ_LEN);
+                uhash_in[j] = ((maj[j] + correction[j]) & MAJ_LEN);
 
-            // append the input to the universal hash input
-            memcpy(&hash_in[RING_DIM], &xor_inputs[n * XOR_LEN], XOR_LEN);
-            memcpy(&hash_in[RING_DIM + XOR_LEN], &maj_inputs[n * MAJ_LEN], MAJ_LEN);
-
-            hash_in_maj[index] = universal_hash(pp, hash_in, RING_DIM + XOR_LEN + MAJ_LEN);
+            hash_in_maj[index] = universal_hash(pp, uhash_in, RING_DIM);
 
             index++;
         }
+
+        // append the input to the universal hash input
+        memcpy(&uhash_in[0], &xor_inputs[n * XOR_LEN], XOR_LEN);
+        memcpy(&uhash_in[XOR_LEN], &maj_inputs[n * MAJ_LEN], MAJ_LEN);
+        hash_in_x[n] = universal_hash(pp, uhash_in, XOR_LEN + MAJ_LEN);
     }
 
     // aes_batch_eval doesn't xor the input with the cipher output
@@ -270,22 +281,24 @@ void sender_eval(
     // https://eprint.iacr.org/2019/074.pdf
     aes_batch_eval(pp->hash_ctx0, &hash_in_xor[0], &hash_out_xor[0], num_ots * 4);
     aes_batch_eval(pp->hash_ctx1, &hash_in_maj[0], &hash_out_maj[0], num_ots * (MAJ_LEN + 1));
+    aes_batch_eval(pp->hash_ctx2, &hash_in_x[0], &hash_out_x[0], num_ots);
 
-    // XOR both outputs together
+    // XOR all outputs together
     for (size_t n = 0; n < num_ots; n++)
     {
         size_t out_index_0 = n * NUM_COMBOS;
         size_t out_index_1 = n * NUM_COMBOS + (MAJ_LEN + 1);
 
+        x_out = hash_out_x[n];
         for (i = 0; i < (MAJ_LEN + 1); i++)
         {
             // the maj part is reused for both the lower and upper half
             maj_out = hash_out_maj[out_index_0 / 2 + i];
             xor_out = hash_out_xor[4 * n] ^ hash_out_xor[4 * n + 1];
-            outputs[out_index_0 + i] = (xor_out ^ maj_out) & 1; // truncate
+            outputs[out_index_0 + i] = (xor_out ^ maj_out ^ x_out) & 1; // truncate
 
             xor_out = hash_out_xor[4 * n + 2] ^ hash_out_xor[4 * n + 3];
-            outputs[out_index_1 + i] = (xor_out ^ maj_out) & 1; // truncate
+            outputs[out_index_1 + i] = (xor_out ^ maj_out ^ x_out) & 1; // truncate
         }
     }
 
@@ -295,6 +308,9 @@ void sender_eval(
     free(hash_out_maj);
     free(xor_outputs);
     free(maj_outputs);
+    free(uhash_in);
+    free(hash_in_x);
+    free(hash_out_x);
 }
 
 void receiver_eval(
@@ -308,11 +324,14 @@ void receiver_eval(
 
     uint128_t *xor_outputs = malloc(sizeof(uint128_t) * num_ots * 2);
     uint8_t *maj_outputs = malloc(sizeof(uint8_t) * num_ots * RING_DIM);
-    uint8_t *hash_in = malloc(sizeof(uint8_t) * (RING_DIM + XOR_LEN + MAJ_LEN));
 
     uint128_t *hash_out_xor = malloc(sizeof(uint128_t) * num_ots * 2);
     uint128_t *hash_in_maj = malloc(sizeof(uint128_t) * num_ots);
     uint128_t *hash_out_maj = malloc(sizeof(uint128_t) * num_ots);
+
+    uint8_t *uhash_in = malloc(sizeof(uint8_t) * (RING_DIM + XOR_LEN + MAJ_LEN));
+    uint128_t *hash_in_x = malloc(sizeof(uint128_t) * num_ots);
+    uint128_t *hash_out_x = malloc(sizeof(uint128_t) * num_ots);
 
     common_eval(
         csk,
@@ -322,29 +341,31 @@ void receiver_eval(
         maj_outputs,
         num_ots);
 
-    uint128_t xor_out;
+    uint128_t xor_out, x_out;
     uint8_t *maj;
 
     size_t j;
     for (size_t n = 0; n < num_ots; n++)
     {
-        memcpy(hash_in, &maj_outputs[n * RING_DIM], sizeof(uint8_t) * RING_DIM);
+        memcpy(uhash_in, &maj_outputs[n * RING_DIM], sizeof(uint8_t) * RING_DIM);
+        hash_in_maj[n] = universal_hash(pp, uhash_in, RING_DIM);
 
         // append the input to the universal hash input
-        memcpy(&hash_in[RING_DIM], &xor_inputs[n * XOR_LEN], XOR_LEN);
-        memcpy(&hash_in[RING_DIM + XOR_LEN], &maj_inputs[n * MAJ_LEN], MAJ_LEN);
-
-        hash_in_maj[n] = universal_hash(pp, hash_in, RING_DIM + XOR_LEN + MAJ_LEN);
+        memcpy(&uhash_in[0], &xor_inputs[n * XOR_LEN], XOR_LEN);
+        memcpy(&uhash_in[XOR_LEN], &maj_inputs[n * MAJ_LEN], MAJ_LEN);
+        hash_in_x[n] = universal_hash(pp, uhash_in, XOR_LEN + MAJ_LEN);
     }
 
     aes_batch_eval(pp->hash_ctx0, &xor_outputs[0], &hash_out_xor[0], num_ots * 2);
     aes_batch_eval(pp->hash_ctx1, &hash_in_maj[0], &hash_out_maj[0], num_ots);
+    aes_batch_eval(pp->hash_ctx2, &hash_in_x[0], &hash_out_x[0], num_ots);
 
-    // XOR both outputs together
+    // XOR all  outputs together
     for (size_t n = 0; n < num_ots; n++)
     {
+        x_out = hash_out_x[n];
         xor_out = hash_out_xor[2 * n] ^ hash_out_xor[2 * n + 1];
-        outputs[n] = (xor_out ^ hash_out_maj[n]) & 1;
+        outputs[n] = (xor_out ^ hash_out_maj[n] ^ x_out) & 1;
     }
 
     free(xor_outputs);
@@ -352,6 +373,9 @@ void receiver_eval(
     free(hash_in_maj);
     free(hash_out_maj);
     free(hash_out_xor);
+    free(uhash_in);
+    free(hash_in_x);
+    free(hash_out_x);
 }
 
 void GenerateRandomInputs(
