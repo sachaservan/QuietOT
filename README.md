@@ -1,4 +1,4 @@
-# QuietOT Implementation
+# QuietOT Implementation 🤫
 
 A prototype implementation of the [QuietOT](https://eprint.iacr.org/2024/1079.pdf) OT extension protocol in C. 
 
