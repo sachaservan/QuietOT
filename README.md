@@ -76,7 +76,7 @@ make && ./bin/test
 ```
 Running BIPSW with AVX512
 ```
-make -AVX=1 
+make AVX=1 
 make && ./bin/test 
 ```
 
