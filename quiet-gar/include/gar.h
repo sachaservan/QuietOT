@@ -14,7 +14,7 @@ typedef struct
     uint64_t *key_xor_64;
     uint8_t *key_maj;
 
-    // optional fields (only present for MSK)
+    // Optional fields (only present for MSK)
     uint8_t *maj_corrections;
     uint128_t xor_delta_128;
     uint64_t xor_delta_64;
@@ -35,38 +35,40 @@ typedef struct
 void pp_gen(PublicParams *pp);
 void pp_free(PublicParams *pp);
 
-void key_gen(PublicParams *pp, Key *msk);
+void key_gen(
+    const PublicParams *pp,
+    Key *msk);
 
 void constrain_key_gen(
-    PublicParams *pp,
-    Key *msk,
+    const PublicParams *pp,
+    const Key *msk,
     Key *csk,
-    uint8_t *constraint);
+    const uint8_t *constraint);
 
 void GenerateRandomInputs(
-    PublicParams *pp,
+    const PublicParams *pp,
     uint16_t *xor_inputs,
     uint16_t *maj_inputs,
-    size_t num_ots);
+    const size_t num_ots);
 
 void sender_eval(
-    PublicParams *pp,
-    Key *msk,
+    const PublicParams *pp,
+    const Key *msk,
     const uint16_t *xor_inputs,
     const uint16_t *maj_inputs,
     uint8_t *outputs,
     const size_t num_ots);
 
 void receiver_eval(
-    PublicParams *pp,
-    Key *csk,
+    const PublicParams *pp,
+    const Key *csk,
     const uint16_t *xor_inputs,
     const uint16_t *maj_inputs,
     uint8_t *outputs,
     const size_t num_ots);
 
 void compute_correction_terms(
-    uint8_t *maj_delta,
+    const uint8_t *maj_delta,
     uint8_t *maj_corrections);
 
 #endif

@@ -39,8 +39,7 @@ static inline void inplace_mod_3_addr(uint128_t *a, const uint128_t *b)
 {
     static uint128_t tmp_h, tmp_l;
 
-    // do bit-sliced mod 3 addition
-    // see appendix B.1 of
+    // Do bit-sliced mod 3 addition as described in Appendix B.1 of WAVE:
     // https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/round-1/spec-files/wave-spec-web.pdf
     tmp_h = (a[1] ^ b[0]) & (a[0] ^ b[1]);
     tmp_l = (a[1] ^ b[1]) | (a[0] ^ b[1] ^ b[0]);
@@ -52,8 +51,7 @@ static inline void inplace_mod_3_subr(uint128_t *a, const uint128_t *b)
 {
     static uint128_t tmp_h, tmp_l;
 
-    // do bit-sliced mod 3 subtraction
-    // see appendix B.1 of
+    // Do bit-sliced mod 3 subtraction as described in Appendix B.1 of WAVE:
     // https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/round-1/spec-files/wave-spec-web.pdf
     tmp_h = (a[1] ^ b[1] ^ b[0]) & (a[0] ^ b[1]);
     tmp_l = (a[1] ^ b[1]) | (a[0] ^ b[0]);
@@ -61,6 +59,7 @@ static inline void inplace_mod_3_subr(uint128_t *a, const uint128_t *b)
     a[1] = tmp_l;
 }
 
+// For debugging
 static inline void print_binary(uint128_t number)
 {
     for (int i = 63; i >= 0; i--)
@@ -71,6 +70,7 @@ static inline void print_binary(uint128_t number)
     printf("\n");
 }
 
+// For debugging
 static uint128_t hex_to_uint_128(const char *hex_str)
 {
     uint128_t result = 0;

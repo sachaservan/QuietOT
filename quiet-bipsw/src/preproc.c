@@ -6,10 +6,10 @@
 
 // Pre-computes inner products and coefficients used in CPRF evaluation.
 void compute_key_caches(
-    PublicParams *pp,
-    Key *key,
+    const PublicParams *pp,
+    const Key *key,
     KeyCache *key_cache,
-    size_t mem_size)
+    const size_t mem_size)
 {
 
     uint128_t *cache_2;

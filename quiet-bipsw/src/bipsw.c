@@ -13,7 +13,7 @@
 
 void pp_gen(
     PublicParams *pp,
-    size_t key_len)
+    const size_t key_len)
 {
     pp->key_len = key_len;
 
@@ -44,8 +44,8 @@ void pp_free(PublicParams *pp)
 // TODO: implement the k_0 part of the protocol
 // need to include secret offset k_0 in both msk and csk
 // (k_0 is only required to avoid having a deterministic output on the all-zero
-// input, which has a negligible probability of occurring).
-void key_gen(PublicParams *pp, Key *msk)
+// input, which has a negligible probability of occurring in QuietOT).
+void key_gen(const PublicParams *pp, Key *msk)
 {
     // CPRF master key (in CRT form with mod 2 and mod 3 parts)
     msk->key_2 = malloc(sizeof(uint128_t) * pp->key_len);
@@ -53,21 +53,22 @@ void key_gen(PublicParams *pp, Key *msk)
 
     RAND_bytes((uint8_t *)msk->key_2, sizeof(uint128_t) * pp->key_len);
 
-    // generate unbiased values mod 3 via rejection sampling
+    // Generate unbiased values mod 3 via rejection sampling
     uint8_t *rand_3 = malloc(sizeof(uint8_t) * pp->key_len * RING_DIM);
     sample_mod_3(rand_3, pp->key_len * RING_DIM);
 
     for (size_t i = 0; i < pp->key_len; i++)
     {
-        // valid representations are (0,0), (0,1), and (1,1)
-        // 0 --> (0,0)  1 --> (0,1)  2 --> (1,1)
+        // Valid representations are (0,0), (0,1), and (1,1)
+        // 0 --> (0,0)
+        // 1 --> (0,1)
+        // 2 --> (1,1)
 
         msk->key_3[2 * i] = 0;
         msk->key_3[2 * i + 1] = 0;
         uint128_t mask = 1;
         for (size_t j = 0; j < RING_DIM; j++)
         {
-
             if (rand_3[i * RING_DIM + j] == 2)
             {
                 // set to (1,1)
@@ -88,34 +89,33 @@ void key_gen(PublicParams *pp, Key *msk)
     msk->delta = malloc(sizeof(uint8_t) * RING_DIM);
     sample_mod_6(msk->delta, RING_DIM);
 
+    // Compute the \delta offsets that we use in sender_eval
     compute_correction_terms(msk, msk->delta);
 }
 
 // Constrain generates a constrained key (in CRT form)
 // consisting of KEY_LEN elements of the ring Z_6^RING_DIM.
-// - Inputs: a constraint (in CRT form) consisting of KEY_LEN element of Z_6
+// - Inputs: a constraint z (in CRT form) consisting of KEY_LEN element of Z_6
 //           and one random element (Delta) of the ring Z_6^RING_DIM.
-// - Outputs: constrained key of the form msk + \Delta*constraint
-//
-// TODO: implement the k_0 part of the protocol
-// need to include secret offset k_0 in both msk and csk
-// (k_0 is only required to avoid having a deterministic output on the all-zero
-// input, which has a negligible probability of occurring).
+// - Outputs: constrained key of the form msk + \Delta*z
 void constrain_key_gen(
-    PublicParams *pp,
-    Key *msk,
+    const PublicParams *pp,
+    const Key *msk,
     Key *csk,
-    uint8_t *constraint)
+    const uint8_t *constraint)
 {
 
-    size_t key_len = pp->key_len;
+    const size_t key_len = pp->key_len;
     csk->key_2 = malloc(sizeof(uint128_t) * key_len);
     csk->key_3 = malloc(sizeof(uint128_t) * key_len * 2);
 
     uint128_t prod;
 
     // To compute \Delta * z, we compute the "tensor product" between \Delta
-    // and z (the constraint) which gives us a vector of KEY_LEN (Z_6^RING_DIM) elements.
+    // and z (the constraint) which gives us a vector of KEY_LEN (Z_6^RING_DIM)
+    // elements.
+
+    // compute the Z_2 part
     for (size_t i = 0; i < key_len; i++)
     {
         csk->key_2[i] = msk->key_2[i];
@@ -123,11 +123,12 @@ void constrain_key_gen(
         {
             prod = ((msk->delta[j] * constraint[i]) % 6) % 2;
 
-            // pack each ring element into a uint128
+            // pack each ring element into one uint128_t
             csk->key_2[i] ^= (prod << j);
         }
     }
 
+    // compute the Z_3 part
     uint128_t packed_3[2];
     for (size_t i = 0; i < key_len; i++)
     {
@@ -162,9 +163,9 @@ void constrain_key_gen(
 }
 
 static inline void common_eval(
-    PublicParams *pp,
-    Key *key,
-    KeyCache *key_cache,
+    const PublicParams *pp,
+    const Key *key,
+    const KeyCache *key_cache,
     const uint16_t *inputs,
     uint128_t *outputs_2,
     uint128_t *outputs_3,
@@ -178,7 +179,7 @@ static inline void common_eval(
 #ifdef AVX
     size_t mem_size = num_blocks * cache_block_size * sizeof(__m512i);
 
-    // allocate aligned memory for AVX512
+    // Allocate aligned memory for AVX512
     posix_memalign((void **)&key_cache->cache_2_avx, 64, mem_size);
     posix_memalign((void **)&key_cache->cache_3_avx, 64, 2 * mem_size);
 
@@ -187,7 +188,7 @@ static inline void common_eval(
 
     // TODO [optimization]: have the keys be stored in this format
     // correctly without having to copy. After some benchmarks,
-    // however, optimizing this part will leads to only minor results.
+    // however, optimizing this part will leads to only minor perf improvements.
     for (size_t i = 0; i < num_blocks * cache_block_size; i++)
     {
         avx_store[0] = key_cache->cache_2[0 * KEY_LEN + i];
@@ -218,17 +219,15 @@ static inline void common_eval(
     uint128_t sum_2 = 0;      // we pack RING_DIM bits in uint128_t
     uint128_t sum_3[2] = {0}; // we pack RING_DIM Z3 elements in two uint128_t
 
-    size_t input_offset = 0;
-    size_t cache_offset;
-
-    clock_t t = clock();
+    size_t input_offset = 0; // offset to the current input ring element vector
+    size_t cache_offset;     // offset to the current key ring element in cache
 
     uint8_t i, j;
     for (size_t n = 0; n < num_ots;)
     {
         x = &inputs[input_offset];
 
-        // compute inner product between cprf_key and current input
+        // Compute inner product between CPRF key and current input
         // using the cached inner product blocks
 
 #ifdef AVX
@@ -241,22 +240,32 @@ static inline void common_eval(
         for (i = 0; i < num_blocks; i++)
         {
             // compute XOR part
-            sum_2_avx = _mm512_xor_si512(sum_2_avx, key_cache->cache_2_avx[cache_offset + x[i]]);
+            sum_2_avx = _mm512_xor_si512(
+                sum_2_avx,
+                key_cache->cache_2_avx[cache_offset + x[i]]);
 
             // (a[1] ^ b[0])
-            tmp_1 = _mm512_xor_si512(sum_3l_avx, key_cache->cache_3_avx[2 * cache_offset + 2 * x[i]]);
+            tmp_1 = _mm512_xor_si512(
+                sum_3l_avx,
+                key_cache->cache_3_avx[2 * cache_offset + 2 * x[i]]);
 
             // (a[0] ^ b[1])
-            tmp_2 = _mm512_xor_si512(sum_3h_avx, key_cache->cache_3_avx[2 * cache_offset + 2 * x[i] + 1]);
+            tmp_2 = _mm512_xor_si512(
+                sum_3h_avx,
+                key_cache->cache_3_avx[2 * cache_offset + 2 * x[i] + 1]);
 
             // (a[1] ^ b[0]) & (a[0] ^ b[1]);
             sum_3h_avx = _mm512_and_si512(tmp_1, tmp_2);
 
             // (a[1] ^ b[1])
-            tmp_1 = _mm512_xor_si512(sum_3l_avx, key_cache->cache_3_avx[2 * cache_offset + 2 * x[i] + 1]);
+            tmp_1 = _mm512_xor_si512(
+                sum_3l_avx,
+                key_cache->cache_3_avx[2 * cache_offset + 2 * x[i] + 1]);
 
             // (a[0] ^ b[1] ^ b[0]);
-            tmp_2 = _mm512_xor_si512(tmp_2, key_cache->cache_3_avx[2 * cache_offset + 2 * x[i]]);
+            tmp_2 = _mm512_xor_si512(
+                tmp_2,
+                key_cache->cache_3_avx[2 * cache_offset + 2 * x[i]]);
 
             sum_3l_avx = _mm512_or_si512(tmp_1, tmp_2);
 
@@ -288,8 +297,12 @@ static inline void common_eval(
         cache_offset = 0;
         for (i = 0; i < num_blocks; i++)
         {
+            // compute the mod2 part of the inner product
             sum_2 ^= key_cache->cache_2[cache_offset + x[i]];
-            inplace_mod_3_addr(&sum_3[0], &key_cache->cache_3[2 * cache_offset + 2 * x[i]]);
+
+            // compute the mod3 part of the inner product
+            inplace_mod_3_addr(
+                &sum_3[0], &key_cache->cache_3[2 * cache_offset + 2 * x[i]]);
             cache_offset += cache_block_size;
         }
 
@@ -300,10 +313,7 @@ static inline void common_eval(
         n++;
         input_offset += num_blocks;
 #endif
-    }
-
-    t = clock() - t;
-    double time_taken = ((double)t) / (CLOCKS_PER_SEC / 1000.0); // ms
+    } // end of loop
 
 #ifdef AVX
     free(key_cache->cache_2_avx);
@@ -313,9 +323,9 @@ static inline void common_eval(
 }
 
 void sender_eval(
-    PublicParams *pp,
-    Key *msk,
-    KeyCache *msk_cache,
+    const PublicParams *pp,
+    const Key *msk,
+    const KeyCache *msk_cache,
     const uint16_t *inputs,
     uint8_t *outputs,
     const size_t num_ots)
@@ -354,14 +364,14 @@ void sender_eval(
         // we pack 128-log_3(2^128) bits of the input into the Z3 blocks
         // before feeding the whole thing into AES to instantiate H(k||x)
         // where H is a random oracle.
-        size_t idx_in_chunk = 6 * n;
         // Note: we pack 6*16 = 96 bits of the input, where 16 = CACHE_BITS
         // TODO: remove dependency on CACHE_BITS = 16
+        size_t idx_in_chunk = 6 * n;
 
-        // subtract the correction terms
+        // Subtract the correction terms
         for (size_t i = 0; i < 6; i++)
         {
-            // indices of the mod2 and mod3 components
+            // Indices of the mod2 and mod3 components
             idx_2 = 3 * i;
             idx_30 = 3 * i + 1;
             idx_31 = 3 * i + 2;
@@ -372,7 +382,7 @@ void sender_eval(
 
             inplace_mod_3_subr(&chunk_hash_in[idx_30], &msk->corrections_3[2 * i]);
 
-            // append the input string to the last chunks of the mod3 components
+            // Append the input string to the last chunks of the mod3 components
             chunk_hash_in[idx_30] ^= inputs[idx_in_chunk];
             chunk_hash_in[idx_30] <<= 16; // 16 = CACHE_BITS
             chunk_hash_in[idx_30] ^= (inputs[idx_in_chunk + 1]);
@@ -388,12 +398,12 @@ void sender_eval(
     }
 
     // aes_batch_eval doesn't xor the input with the cipher output
-    // but this is still a okay in the ideal cipher model since we
-    // truncate the output to one bit anyway, as explained in:
-    // https://eprint.iacr.org/2019/074.pdf
+    // but this is still sufficient to instantiate a correlation-robust hash
+    // in the ideal cipher model since we truncate the output to one bit at
+    // the end, as explained in: https://eprint.iacr.org/2019/074.pdf
     aes_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 6 * 3);
 
-    // xor the output blocks and truncate to one bit
+    // Xor the output blocks and truncate to one bit
     for (size_t n = 0; n < num_ots * 6; n++)
         outputs[n] = (hash_out[3 * n] ^ hash_out[3 * n + 1] ^ hash_out[3 * n + 2]) & 1;
 
@@ -404,9 +414,9 @@ void sender_eval(
 }
 
 void receiver_eval(
-    PublicParams *pp,
-    Key *csk,
-    KeyCache *csk_cache,
+    const PublicParams *pp,
+    const Key *csk,
+    const KeyCache *csk_cache,
     const uint16_t *inputs,
     uint8_t *outputs,
     const size_t num_ots)
@@ -455,10 +465,10 @@ void receiver_eval(
         hash_in[idx_31] ^= (inputs[idx_in_chunk + 5]);
     }
 
-    // see comment in sender_eval
+    // See comment about this in sender_eval
     aes_batch_eval(pp->hash_ctx, &hash_in[0], &hash_out[0], num_ots * 3);
 
-    // xor the output blocks and truncate to one bit
+    // Xor the output blocks and truncate to one bit
     for (size_t n = 0; n < num_ots; n++)
         outputs[n] = (hash_out[3 * n] ^ hash_out[3 * n + 1] ^ hash_out[3 * n + 2]) & 1;
 
@@ -471,7 +481,7 @@ void receiver_eval(
 // Pre-compute corrections terms
 void compute_correction_terms(
     Key *msk,
-    uint8_t *delta)
+    const uint8_t *delta)
 {
     msk->corrections_3 = malloc(sizeof(uint128_t) * 6 * 2);
 
@@ -503,7 +513,7 @@ void compute_correction_terms(
         for (size_t j = 0; j < RING_DIM; j++)
         {
 
-            prod = 3 - ((i * delta[j]) % 6) % 3; // need to negate (mod 3)
+            prod = 3 - ((i * delta[j]) % 6) % 3; // Need to negate (mod 3)
 
             if (prod == 2)
             {

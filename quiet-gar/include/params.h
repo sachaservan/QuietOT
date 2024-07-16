@@ -15,12 +15,13 @@
 // #define XOR_LEN 7
 // #define MAJ_LEN 31
 
-#define RING_DIM (128 + 64)
-#define NUM_COMBOS (2 * (MAJ_LEN + 1))
+#define RING_DIM 192  // (128 + 64)
+#define NUM_COMBOS 32 // (2 * (MAJ_LEN + 1))
 
 #define RAND_BUFFER 4
 #define RAND_OFFSET_MAX 5 // bound on the number of samples rejected
 
+// polymur hash parameters
 #define POLYMUR_SEED0 0x28ce40f3881d9798ULL
 #define POLYMUR_SEED1 0x67ee64638656503eULL
 #define POLYMUR_TWEAK 0xdf6109d5d320a714ULL

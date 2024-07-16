@@ -43,44 +43,44 @@ typedef struct
 
 void pp_gen(
     PublicParams *pp,
-    size_t key_len);
+    const size_t key_len);
 
 void pp_free(PublicParams *pp);
 
 void key_gen(
-    PublicParams *pp,
+    const PublicParams *pp,
     Key *msk);
 
 void constrain_key_gen(
-    PublicParams *pp,
-    Key *msk,
+    const PublicParams *pp,
+    const Key *msk,
     Key *csk,
-    uint8_t *constraint);
+    const uint8_t *constraint);
 
 void sender_eval(
-    PublicParams *pp,
-    Key *msk,
-    KeyCache *csk_cache,
+    const PublicParams *pp,
+    const Key *msk,
+    const KeyCache *csk_cache,
     const uint16_t *inputs,
     uint8_t *outputs,
     const size_t num_ots);
 
 void receiver_eval(
-    PublicParams *pp,
-    Key *csk,
-    KeyCache *csk_cache,
+    const PublicParams *pp,
+    const Key *csk,
+    const KeyCache *csk_cache,
     const uint16_t *inputs,
     uint8_t *outputs,
     const size_t num_ots);
 
 void compute_key_caches(
-    PublicParams *pp,
-    Key *key,
+    const PublicParams *pp,
+    const Key *key,
     KeyCache *key_cache,
-    size_t mem_size);
+    const size_t mem_size);
 
 void compute_correction_terms(
     Key *msk,
-    uint8_t *delta);
+    const uint8_t *delta);
 
 #endif
