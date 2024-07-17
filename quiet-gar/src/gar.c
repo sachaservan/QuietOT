@@ -395,7 +395,7 @@ void receiver_eval(
     free(hash_out_x);
 }
 
-void GenerateRandomInputs(
+void generate_random_inputs(
     const PublicParams *pp,
     uint16_t *xor_inputs,
     uint16_t *maj_inputs,

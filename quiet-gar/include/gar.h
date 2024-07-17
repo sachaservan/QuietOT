@@ -45,7 +45,7 @@ void constrain_key_gen(
     Key *csk,
     const uint8_t *constraint);
 
-void GenerateRandomInputs(
+void generate_random_inputs(
     const PublicParams *pp,
     uint16_t *xor_inputs,
     uint16_t *maj_inputs,
