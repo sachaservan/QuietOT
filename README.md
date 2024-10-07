@@ -108,6 +108,7 @@ make && ./bin/bench
 
 ## Acknowledgements
 We use the super fast [Polymur](https://github.com/orlp/polymur-hash) hash for universal hashing. 
+We thank [Maxime Bombar](https://github.com/mbombar) for reviewing and providing feedback on the code. 
 
 ## ⚠️ Important Warning
 
