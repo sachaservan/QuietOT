@@ -1,11 +1,10 @@
 # QuietOT Implementation 🤫
 
-A prototype implementation of the [QuietOT](https://eprint.iacr.org/2024/1079.pdf) OT extension protocol in C. 
+[QuietOT](https://eprint.iacr.org/2024/1079.pdf) (to appear at AsiaCrypt 2024) is a lightweight oblivious transfer extension protocol with a non-interactive public-key setup.
+This implementation is intended to benchmark the performance of QuietOT, and can be used to reproduce the results reported in Table 2 of the evaluation section. 
 
-QuietOT is a lightweight oblivious transfer protocol with a public-key setup. 
 
 ## Organization
-
 
 | **Directory**                    |                                                                |
 | :------------------------------- | :------------------------------------------------------------- |
@@ -13,7 +12,6 @@ QuietOT is a lightweight oblivious transfer protocol with a public-key setup.
 | [quiet-gar/](quiet-gar/)         | Implementation of QuietOT using the GAR wPRF.                  |
 | [bcmpr-bipsw/](bcmpr-bipsw/)     | Implementation of the BCMPR PCF using the BIPSW wPRF           |
 | [other/](other/)                 | Partial implementations of the BCMPR and OSY pseudorandom correlation functions for benchmarking purposes. |
-
 
 ## Dependencies
 
@@ -34,7 +32,6 @@ QuietOT is a lightweight oblivious transfer protocol with a public-key setup.
 On MacOS, use [homebrew](https://brew.sh/) to install dependencies.
 `cmake` and `clang` can be installed via `xcode-select --install`.
 OpenSSL can be installed via `brew install openssl` or manually.
-
 
 
 ## Installation
@@ -58,6 +55,8 @@ xcode-select --install  # Installs cmake and clang
 ```
 
 ## Quick Start
+
+To get QuietOT up and running quickly:
 
 ```bash
 git clone https://github.com/yourusername/QuietOT.git
@@ -112,5 +111,5 @@ We thank [Maxime Bombar](https://github.com/mbombar) for reviewing and providing
 
 ## ⚠️ Important Warning
 
-<b>This implementation is intended for _research purposes only_. The code has NOT been vetted by security experts.
-As such, no portion of the code should be used in any real-world or production setting!</b>
+**This implementation is intended for _research purposes only_. The code has NOT been vetted by security experts.
+As such, no portion of the code should be used in any real-world or production setting!**
