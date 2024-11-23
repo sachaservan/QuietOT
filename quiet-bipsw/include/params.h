@@ -1,7 +1,9 @@
 #ifndef _PARAMS
 #define _PARAMS
 
-#define NUM_OTS 1 << 20
+#ifndef NUM_OTS
+#define NUM_OTS 1ULL << 20
+#endif
 
 #define RING_DIM 128  // has to be <= 128
 #define KEY_LEN 768   // needs to be divisible by CACHE_BITS

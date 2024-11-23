@@ -1,7 +1,9 @@
 #ifndef _PARAMS
 #define _PARAMS
 
+#ifndef NUM_OTS
 #define NUM_OTS 1ULL << 20
+#endif
 
 // NOTE: KEY_LEN needs to be divisible by 8 (see utils.h)
 
