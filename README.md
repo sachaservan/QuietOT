@@ -55,14 +55,25 @@ make && ./bin/test
 
 ### Test and benchmark for QuietOT:
 
-```
+```bash
 cd [quiet-bipsw | quiet-gar]
 make && ./bin/test 
 ```
+
+By default, the benchmarks are compiled to generate $2^{20}$ OTs.
+You can change the number of OTs generated (for QuietOT benchmarks only; not implemented for the BCMPR benchmarks) by running
+```bash
+make NUM_OTS=[log2 number of OTs]
+```
+For example, `make NUM_OTS=18` will generate $2^{18}$ OTs. 
+Make sure to run `make clean` before recompiling. 
+<br><br>
+<b>Warning:</b> trying to generate too many OTs (e.g., setting `NUM_OTS=25` will cause performance issues and may cause the benchmarks to stall or crash depending on how much memory you have on your hardware). 
+
 ### Running BIPSW with AVX512 
 
 <b>Note:</b> requires AVX512 hardware support! (e.g., does not work on MacOS)
-```
+```bash
 cd quiet-bipsw
 make AVX=1 
 make && ./bin/test 
@@ -70,17 +81,24 @@ make && ./bin/test
 
 ### Benchmarking BCMPR (with BIPSW wPRF):
 
-```
+```bash
 cd bcmpr-bipsw
 make && ./bin/test
 ```
 
 ### Benchmarking BCMPR (with GAR wPRF) and OSY:
 
-```
+```bash
 cd other
 make && ./bin/bench
 ```
+
+## Future Improvements
+
+- [ ] Implement the public-key setup for QuietOT (note: public key sizes are derived in the [full version of the paper](https://eprint.iacr.org/2024/1079.pdf))
+- [ ] Find a way to use SIMD instructions for the GAR variant
+- [ ] Implement [SIMD for ARM architectures](https://developer.arm.com/Architectures/Neon) to accelerate the MacOS implementation
+
 
 ## Citation
 ```
@@ -93,6 +111,7 @@ make && ./bin/bench
       url = {https://eprint.iacr.org/2024/1079}
 }
 ```
+
 
 ## Acknowledgements
 We use the super fast [Polymur](https://github.com/orlp/polymur-hash) hash for universal hashing. 
