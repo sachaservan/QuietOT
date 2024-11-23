@@ -20,8 +20,7 @@ This implementation is intended to benchmark the performance of QuietOT, and can
 - Cmake
 - Clang
 
-## Getting everything to run (tested on Ubuntu, CentOS, and MacOS)
-
+### Installing dependecies on Ubuntu and CentOS
 | Install dependencies (Ubuntu):         | Install dependencies (CentOS):              |
 | -------------------------------------- | ------------------------------------------- |
 | `sudo apt-get install build-essential` | `sudo yum groupinstall 'Development Tools'` |
@@ -29,30 +28,19 @@ This implementation is intended to benchmark the performance of QuietOT, and can
 | `sudo apt install libssl-dev`          | `sudo yum install openssl-devel`            |
 | `sudo apt install clang`               | `sudo yum install clang`                    |
 
+### Installing dependencies on MacOS
 On MacOS, use [homebrew](https://brew.sh/) to install dependencies.
 `cmake` and `clang` can be installed via `xcode-select --install`.
 OpenSSL can be installed via `brew install openssl` or manually.
-
-
-## Installation
-
-Ubuntu: 
-```
-sudo apt-get update
-sudo apt-get install build-essential cmake libssl-dev clang
-```
-
-CentOS
-```
-sudo yum groupinstall 'Development Tools'
-sudo yum install cmake openssl-devel clang
-```
-
-MacOS
 ```
 brew install openssl
 xcode-select --install  # Installs cmake and clang
 ```
+<b>Note:</b> If installing OpenSSL manually on Mac, then you will need to update the library path in the Makefiles to point to the correct directory. 
+
+<br><br>
+
+## Getting everything to run (tested on Ubuntu, CentOS, and MacOS)
 
 ## Quick Start
 
