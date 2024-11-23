@@ -55,27 +55,29 @@ make && ./bin/test
 
 ## Running tests and benchmarks
 
-Test and benchmark for QuietOT:
+### Test and benchmark for QuietOT:
 
 ```
 cd [quiet-bipsw | quiet-gar]
 make && ./bin/test 
 ```
-Running BIPSW with AVX512
+### Running BIPSW with AVX512 
+
+<b>Note:</b> requires AVX512 hardware support! (e.g., does not work on MacOS)
 ```
 cd quiet-bipsw
 make AVX=1 
 make && ./bin/test 
 ```
 
-Benchmarking BCMPR (with BIPSW wPRF):
+### Benchmarking BCMPR (with BIPSW wPRF):
 
 ```
 cd bcmpr-bipsw
 make && ./bin/test
 ```
 
-Benchmarking BCMPR (with GAR wPRF) and OSY:
+### Benchmarking BCMPR (with GAR wPRF) and OSY:
 
 ```
 cd other
