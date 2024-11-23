@@ -225,10 +225,11 @@ int main(int argc, char **argv)
 #endif
     for (int i = 0; i < testTrials; i++)
         avg += benchmarkOTs();
-    printf("******************************************\n");
+    avg = avg / testTrials;
+    printf("******************************************\n\n");
     printf("SUMMARY\n");
     printf("Avg. time: %.2f ms to generate %llu OTs\n", avg, (long long unsigned int)NUM_OTS);
-    printf("Performance: %.2f OTs/sec\n", ((double)(NUM_OTS) / avg) * 1000); // Convert ms to seconds
+    printf("Performance: %i OTs/sec\n", (int)(((double)(NUM_OTS) / avg) * 1000)); // Convert ms to seconds
     printf("Number of trials: %i\n", testTrials);
     printf("******************************************\n\n");
 }

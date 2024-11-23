@@ -100,7 +100,7 @@ double benchmarkOTs()
     t = clock() - t;
     double time_taken = ((double)t) / (CLOCKS_PER_SEC / 1000.0); // ms
 
-    printf("Time (total) %f ms\n", time_taken);
+    printf("Took %.2f ms to generate %zu OTs\n", time_taken, num_ots);
 
     if (!receiver_eval(
             pp,
@@ -154,7 +154,10 @@ int main(int argc, char **argv)
     for (int i = 0; i < testTrials; i++)
         avg += benchmarkOTs();
     printf("******************************************\n");
-    printf("PASS\n");
-    printf("Avg time: %f\n", avg / testTrials);
+    avg = avg / testTrials;
+    printf("SUMMARY\n");
+    printf("Avg. time: %.2f ms to generate %llu OTs\n", avg, (long long unsigned int)NUM_OTS);
+    printf("Performance: %i OTs/sec\n", (int)(((double)(NUM_OTS) / avg) * 1000)); // Convert ms to seconds
+    printf("Number of trials: %i\n", testTrials);
     printf("******************************************\n\n");
 }

@@ -119,7 +119,7 @@ double benchmark_BCMPR_GAR()
     t = clock() - t;
 
     double time_taken = ((double)t) / (CLOCKS_PER_SEC / 1000.0); // ms
-    printf("Time (total) %f ms\n", time_taken);
+    printf("Took %.2f ms to generate %llu OTs\n", time_taken, (long long unsigned int)NUM_OTS);
 
     free_master_key(pp, msk0);
     free_master_key(pp, msk1);
@@ -179,7 +179,7 @@ double benchmark_OSY()
         free(exps);
     }
 
-    printf("Time (total) %f ms\n", time_taken / num_trials_internal);
+    printf("Took %.2f ms to generate one OT\n", time_taken / num_trials_internal);
 
     // free up memory
     BN_CTX_free(ctx);
@@ -196,8 +196,11 @@ int main(int argc, char **argv)
     for (int i = 0; i < testTrials; i++)
         avg += benchmark_BCMPR_GAR();
     printf("******************************************\n");
-    printf("PASS\n");
-    printf("Avg time: %f\n", avg / testTrials);
+    avg = avg / testTrials;
+    printf("SUMMARY\n");
+    printf("Avg. time: %.2f ms to generate %llu OTs\n", avg, (long long unsigned int)NUM_OTS);
+    printf("Performance: %i OTs/sec\n", (int)(((int)(NUM_OTS)) * (1000.0 / avg))); // Convert ms to seconds
+    printf("Number of trials: %i\n", testTrials);
     printf("******************************************\n\n");
 
     avg = 0;
@@ -206,7 +209,11 @@ int main(int argc, char **argv)
     for (int i = 0; i < testTrials; i++)
         avg += benchmark_OSY();
     printf("******************************************\n");
-    printf("PASS\n");
-    printf("Avg time: %f\n", avg / testTrials);
+    avg = avg / testTrials;
+    printf("SUMMARY\n");
+    printf("Avg. time: %.2f ms to generate %llu OTs\n", avg, (long long unsigned int)NUM_OTS);
+    // Note: OSY is a single OT
+    printf("Performance: %.2f OTs/sec\n", (1000.0 / avg)); // Convert ms
+    printf("Number of trials: %i\n", testTrials);
     printf("******************************************\n\n");
 }
