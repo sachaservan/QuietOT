@@ -40,8 +40,6 @@ xcode-select --install  # Installs cmake and clang
 
 <br><br>
 
-## Getting everything to run (tested on Ubuntu, CentOS, and MacOS)
-
 ## Quick Start
 
 To get QuietOT up and running quickly:
