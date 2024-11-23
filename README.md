@@ -75,6 +75,7 @@ make && ./bin/test
 ```
 Running BIPSW with AVX512
 ```
+cd quiet-bipsw
 make AVX=1 
 make && ./bin/test 
 ```
