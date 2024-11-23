@@ -38,6 +38,23 @@ xcode-select --install  # Installs cmake and clang
 ```
 <b>Note:</b> If installing OpenSSL manually on Mac, then you will need to update the library path in the Makefiles to point to the correct directory. 
 
+#### Troubleshooting (MacOS)
+If you see "library 'crypto' not found", try:
+1. Check if OpenSSL is properly installed: `brew list openssl`
+2. Verify the OpenSSL path: `brew --prefix openssl`
+
+## Hardware Requirements
+Memory: At least 4GB RAM recommended
+
+Processor: 
+  - Basic version works on any x86_64 processor
+  - AVX512 acceleration requires Intel processor with AVX512 support.
+
+Expected performance:
+- With AVX512: ~1,200,000 OT/s
+- Without AVX512: ~500,000 OT/s on Linux
+- Without AVX512: ~1,200,000 OT/s on M1 Mac
+      
 <br><br>
 
 ## Quick Start
@@ -93,9 +110,32 @@ cd other
 make && ./bin/bench
 ```
 
+## Reproducing Table 2 of the paper
+Simply run the benchmarks as described above on the respective hardware.
+The output of each benchmark will look something like this: 
+```
+Took 871.88 ms to generate 1048576 OTs
+PASS
+...
+Took 931.52 ms to generate 1048576 OTs
+PASS
+
+******************************************
+SUMMARY
+Avg. time: 8892.60 ms to generate 1048576 OTs
+Performance: 117915.54 OTs/sec
+Number of trials: 10
+******************************************
+```
+
+<b>Notes:</b> 
+- Default `NUM_OTS=20` produces the OTs/sec values in the table. 
+- Public key sizes in the table are derived in the [full version of the paper](https://eprint.iacr.org/2024/1079.pdf).
+- Bits/OT are derived analytically in the paper by analizing the ring size.
+  
 ## Future Improvements
 
-- [ ] Implement the public-key setup for QuietOT (note: public key sizes are derived in the [full version of the paper](https://eprint.iacr.org/2024/1079.pdf))
+- [ ] Implement the public-key setup for QuietOT 
 - [ ] Find a way to use SIMD instructions for the GAR variant
 - [ ] Implement [SIMD for ARM architectures](https://developer.arm.com/Architectures/Neon) to accelerate the MacOS implementation
 
