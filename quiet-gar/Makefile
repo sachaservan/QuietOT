@@ -1,7 +1,7 @@
 CC = clang
 TARGET = ./bin/test
 CFLAGS = -O3 -I./include -I../pr -I/opt/homebrew/opt/openssl/include 
-LDFLAGS = -march=native -lcrypto -lssl -lm -maes -ffast-math
+LDFLAGS = -march=native -L/opt/homebrew/opt/openssl/lib -lcrypto -lssl -lm -maes -ffast-math
 
 SRC = $(wildcard ./src/*.c)
 
