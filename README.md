@@ -1,7 +1,7 @@
 # QuietOT Implementation 🤫
 
 [QuietOT](https://eprint.iacr.org/2024/1079.pdf) (to appear at AsiaCrypt 2024) is a lightweight oblivious transfer extension protocol with a non-interactive public-key setup.
-This implementation is intended to benchmark the performance of QuietOT, and can be used to reproduce the results reported in Table 2 of the evaluation section. 
+This implementation is intended to benchmark the performance of QuietOT, and can be used to reproduce a subset of the results reported in Table 2 of the evaluation section. 
 
 
 ## Organization
@@ -10,7 +10,7 @@ This implementation is intended to benchmark the performance of QuietOT, and can
 | :------------------------------- | :------------------------------------------------------------- |
 | [quiet-bipsw/](quiet-bipsw/)     | Implementation of QuietOT with the BIPSW wPRF.                 |
 | [quiet-gar/](quiet-gar/)         | Implementation of QuietOT using the GAR wPRF.                  |
-| [bcmpr-bipsw/](bcmpr-bipsw/)     | Implementation of the BCMPR PCF using the BIPSW wPRF           |
+| [bcmpr-bipsw/](bcmpr-bipsw/)     | Implementation of the BCMPR PCF using the BIPSW wPRF.           |
 | [other/](other/)                 | Partial implementations of the BCMPR and OSY pseudorandom correlation functions for benchmarking purposes. |
 
 ## Dependencies
@@ -37,6 +37,7 @@ brew install openssl
 xcode-select --install  # Installs cmake and clang
 ```
 <b>Note:</b> If installing OpenSSL manually on Mac, then you will need to update the library path in the Makefiles to point to the correct directory. 
+Change this `-I/opt/homebrew/opt/openssl/include` to `-I[PATH]/openssl/include`
 
 #### Troubleshooting (MacOS)
 If you see "library 'crypto' not found", try:
@@ -44,16 +45,16 @@ If you see "library 'crypto' not found", try:
 2. Verify the OpenSSL path: `brew --prefix openssl`
 
 ## Hardware Requirements
-Memory: At least 4GB RAM recommended
+Memory: At least 4GB RAM recommended.
 
 Processor: 
-  - Basic version works on any x86_64 processor
+  - Basic version works on any x86_64 processor.
   - AVX512 acceleration requires Intel processor with AVX512 support.
 
 Expected performance:
-- With AVX512: ~1,200,000 OT/s
-- Without AVX512: ~500,000 OT/s on Linux
-- Without AVX512: ~1,200,000 OT/s on M1 Mac
+- With AVX512: ~1,200,000 OT/s.
+- Without AVX512: ~500,000 OT/s on Linux.
+- Without AVX512: ~1,200,000 OT/s on M1 Mac.
       
 <br><br>
 
@@ -85,11 +86,11 @@ make NUM_OTS=[log2 number of OTs]
 For example, `make NUM_OTS=18` will generate $2^{18}$ OTs. 
 Make sure to run `make clean` before recompiling. 
 <br><br>
-<b>Warning:</b> trying to generate too many OTs (e.g., setting `NUM_OTS=25` will cause performance issues and may cause the benchmarks to stall or crash depending on how much memory you have on your hardware). 
+<b>Note:</b> trying to generate too many OTs (e.g., setting `NUM_OTS=25` will cause performance issues and may cause the benchmarks to stall or crash depending on how much memory you have on your hardware). 
 
 ### Running BIPSW with AVX512 
 
-<b>Note:</b> requires AVX512 hardware support! (e.g., does not work on MacOS)
+<b>Note:</b> requires AVX512 hardware support! (e.g., does not work on M1 Mac)
 ```bash
 cd quiet-bipsw
 make AVX=1 
@@ -129,7 +130,7 @@ Number of trials: 10
 ```
 
 <b>Notes:</b> 
-- Default `NUM_OTS=20` produces the OTs/sec values in the table. 
+- Default `NUM_OTS=20` produces the OTs/sec values in the table on the respective hardware. 
 - Public key sizes in the table are derived in the [full version of the paper](https://eprint.iacr.org/2024/1079.pdf).
 - Bits/OT are derived analytically in the paper by analizing the ring size.
   
@@ -137,8 +138,8 @@ Number of trials: 10
 
 - [ ] Implement the public-key setup for QuietOT 
 - [ ] Find a way to use SIMD instructions for the GAR variant
-- [ ] Implement [SIMD for ARM architectures](https://developer.arm.com/Architectures/Neon) to accelerate the MacOS implementation
-
+- [ ] Implement [SIMD for ARM architectures](https://developer.arm.com/Architectures/Neon)
+      
 
 ## Citation
 ```
