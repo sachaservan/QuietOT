@@ -63,7 +63,7 @@ Expected performance:
 To get QuietOT up and running quickly:
 
 ```bash
-git clone https://github.com/yourusername/QuietOT.git
+git clone https://github.com/sachaservan/QuietOT.git
 cd QuietOT
 cd quiet-bipsw
 make && ./bin/test
