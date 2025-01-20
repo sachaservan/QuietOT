@@ -143,24 +143,19 @@ Number of trials: 10
 
 ## Citation
 ```
-@inproceedings{QuietOT,
-  author       = {Geoffroy Couteau and
+@inproceedings{quietot,
+   author =       "Geoffroy Couteau and
                   Lalita Devadas and
                   Srinivas Devadas and
                   Alexander Koch and
-                  Sacha Servan-Schreiber},
-  title        = {{QuietOT}: Lightweight ObliviousTransfer with a Public-Key Setup},
-  note         = {\url{https://eprint.iacr.org/2024/1079}},
-  url          = {https://eprint.iacr.org/2024/1079}
+                  Sacha Servan-Schreiber",
+  title =        "{QuietOT}: Lightweight Oblivious Transfer with a Public-Key Setup",
   editor       = {Kai-Min Chung and
                   Yu Sasaki},
-  booktitle    = {Advances in Cryptology - {ASIACRYPT} 2024 - 30th
-                  International Conference on the Theory and
-                  Application of Cryptology and Information Security,
-                  Kolkata, India, December 9-13, 2024
-                  },
-  publisher    = {Springer},
-  year         = {2024},
+  pages =        "197--231",
+  publisher    = {Springer, Singapore},
+  booktitle =    {ASIACRYPT 2024, Part II, LNCS 15485},
+  year =         2024,
 }
 ```
 
